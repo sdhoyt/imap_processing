@@ -1,0 +1,16 @@
+class SpinData:
+    def __init__(self):
+        self.time = list()
+        self.num_completed = list()
+        self.spare1 = list()
+        self.acq_end_sec = list()
+        self.acq_end_subsec = list()
+        self.spare2 = list()
+        self.start_time_seconds = list()
+        self.start_time_subseconds = list()
+        self.esa_p = list()
+        self.esa_n = list()
+        self.valid_period = list()
+        self.valid_phase = list()
+        self.source = list()
+        self.spare = list()

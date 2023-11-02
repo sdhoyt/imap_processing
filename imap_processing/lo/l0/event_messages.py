@@ -1,0 +1,16 @@
+class EvenMessages:
+    def __init__(self):
+        self.time = list()
+        self.qmsg_cnt = list()
+        self.event_time = list()
+        self.event_time_subsec = list()
+        self.event_id = list()
+        self.param_1 = list()
+        self.param_2 = list()
+        self.param_3 = list()
+        self.param_4 = list()
+        self.param_5 = list()
+        self.param_6 = list()
+        self.param_7 = list()
+        self.param_8 = list()
+        self.param_9 = list()

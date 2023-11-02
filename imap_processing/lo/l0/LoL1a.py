@@ -1,0 +1,21 @@
+class LoL1a:
+    def __init__(self):
+        self.autonomy = 
+        self.boot_housekeeping = 
+        self.boot_memory_dump = 
+        self.static_housekeeping = 
+        self.nominal_housekeeping = 
+        self.even_messages = 
+        self.memory_dump = 
+        self.raw_counts = 
+        self.raw_direct_devents = 
+        self.raw_star_sensor = 
+        self.science_counts = 
+        self.science_direct_events = 
+        self.star_sensor_data = 
+        self.spin_data = 
+        self.diagnostic_cdh = 
+        self.diagnostic_interface_board = 
+        self.diagnostic_tof_board = 
+        self.diagnostic_bulk_hvps = 
+        self.pivot_platform = 
