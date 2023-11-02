@@ -1,5 +1,6 @@
 import IntEnum
 
+
 class LoAPID(IntEnum):
     """IMAP-Lo APIDs."""
 

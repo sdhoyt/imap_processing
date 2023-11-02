@@ -1,12 +1,12 @@
 import logging
 from collections import defaultdict
-from enum import IntEnum
 
 import xarray as xr
 
 from imap_processing import decom
 
 logging.basicConfig(level=logging.INFO)
+
 
 def decom_lo_packets(packet_file: str, xtce: str):
     """

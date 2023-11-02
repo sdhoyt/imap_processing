@@ -23,4 +23,3 @@ class ScienceCounts:
         self.pos3 = list()
         self.hydrogen = list()
         self.oxygen = list()
-

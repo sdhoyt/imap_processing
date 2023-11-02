@@ -1,5 +1,6 @@
 from loApid import LoAPID
 
+
 class DiagnosticCDH:
     def __init__(self):
         self.data_dict = dict()
