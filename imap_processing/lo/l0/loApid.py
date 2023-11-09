@@ -1,4 +1,4 @@
-import IntEnum
+from enum import IntEnum
 
 
 class LoAPID(IntEnum):
