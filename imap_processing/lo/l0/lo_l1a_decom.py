@@ -1,15 +1,15 @@
 import logging
-from collections import defaultdict
 from pathlib import Path
-from imap_processing.lo.l0.loApid import LoAPID
-import xarray as xr
-from imap_processing.lo.l0.boot_housekeeping import BootHousekeeping
-#from diagnostic_interface_board import DiagnosticInterfaceBoard
-#from event_messages import EventMessages
-#from nominal_housekeeping import NominalHousekeeping
-#from static_housekeeping import StaticHousekeeping
-from imap_processing.lo import version
+
 from imap_processing import decom
+
+# from diagnostic_interface_board import DiagnosticInterfaceBoard
+# from event_messages import EventMessages
+# from nominal_housekeeping import NominalHousekeeping
+# from static_housekeeping import StaticHousekeeping
+from imap_processing.lo import version
+from imap_processing.lo.l0.boot_housekeeping import BootHousekeeping
+from imap_processing.lo.l0.loApid import LoAPID
 
 logging.basicConfig(level=logging.INFO)
 
@@ -41,7 +41,7 @@ def decom_lo_packets(packet_file: str, xtce: str):
     #     apid = packet.header["PKT_APID"].derived_value
     #     if apid not in packet_list:
     #         packet_list.append(apid)
-    
+
     # remove any empty packets
 
     print(packets[0])
@@ -50,16 +50,16 @@ def decom_lo_packets(packet_file: str, xtce: str):
     sorted_packets = sorted(
         filtered_packets, key=lambda x: x.data["SHCOARSE"].derived_value
     )
-    filename=Path(packet_file).name
+    filename = Path(packet_file).name
 
     for packet in sorted_packets:
         apid = packet.header["PKT_APID"].derived_value
         print("LOOKING FOR BOOTHK")
         if apid == LoAPID.BOOT_HK:
             print("GOT BOOTHK")
-            boot_hk = BootHousekeeping(packet, version, filename)
+            BootHousekeeping(packet, version, filename)
 
-    #return book_hk
+    # return book_hk
     # Store data for each apid
     # unpacked_data =
     #   {apid0: {var0: [item0, item1, ...], var1: [item0, item1, ...]}, ...}
