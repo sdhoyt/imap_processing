@@ -7,7 +7,9 @@ from imap_processing.lo.l0 import lo_l1a_decom
 def decom_test_data():
     """Read test data from file"""
     # TODO: Update CCSDS with updated data (this version is out of date)
-    packet_file = "imap_processing/lo/tests/Instrument_EMPOKE_test_20231027T173028.CCSDS"
+    packet_file = (
+        "imap_processing/lo/tests/Instrument_EMPOKE_test_20231027T173028.CCSDS"
+    )
     # This xtce is out of date but being used to test with the out of
     # date sample test data currently available
     xtce = "imap_processing/lo/packet_definitions/P_ILO_SCI_DE.xml"
@@ -17,11 +19,9 @@ def decom_test_data():
 
 def test_total_datasets(decom_test_data):
     """Test if total number of datasets is correct"""
-    total_datasets = 1
     # assert len(decom_test_data) == total_datasets
 
 
 def test_dataset_dims_length(decom_test_data):
     """Test if the time dimension length in the dataset is correct"""
-    num_packet_times = 1153
     # assert decom_test_data["ILO_RAW_DE"].dims["Epoch"] == num_packet_times

@@ -1,12 +1,6 @@
 import logging
-from collections import defaultdict
 
-import xarray as xr
 from boot_housekeeping import BootHousekeeping as bhk
-from diagnostic_interface_board import DiagnosticInterfaceBoard as diagifb
-from event_messages import EventMessages as evtmsg
-from nominal_housekeeping import NominalHousekeeping as nhk
-from static_housekeeping import StaticHousekeeping as shk
 
 from imap_processing import decom
 
@@ -35,12 +29,12 @@ def decom_lo_packets(packet_file: str, xtce: str):
     packets = decom.decom_packets(packet_file, xtce)
     logging.info(f"{packet_file} unpacked")
 
-    packet_list=[]
+    packet_list = []
     for packet in packets:
         apid = packet.header["PKT_APID"].derived_value
         if apid not in packet_list:
             packet_list.append(apid)
-    
+
     # remove any empty packets
     filtered_packets = list(filter(lambda x: len(x.data) != 0, packets))
     # sort all the packets in the list by their spacecraft time

@@ -1,9 +1,10 @@
-from loApid import LoAPID
 from dataclasses import dataclass, fields
+
+from loApid import LoAPID
+
 
 @dataclass
 class BootHousekeeping:
-
     time: int
     boot_ver: int
     boot_cnt: int
