@@ -1,68 +1,86 @@
 from loApid import LoAPID
+from dataclasses import dataclass, fields
 
-
+@dataclass
 class BootHousekeeping:
-    def __init__(self):
-        self.time = list()
-        self.boot_ver = list()
-        self.boot_cnt = list()
-        self.bist_stat = list()
-        self.bist_abus = list()
-        self.bist_dbus = list()
-        self.bist_mem_ff = list()
-        self.bist_mem_fl = list()
-        self.bist_mem_map = list()
-        self.bist_mem_cnt = list()
-        self.img_1_stat = list()
-        self.img_2_stat = list()
-        self.tab_1_stat = list()
-        self.tab_2_stat = list()
-        self.spare_0 = list()
-        self.fsw_img_ver = list()
-        self.table_img_ver = list()
-        self.instr_id = list()
-        self.spare_1 = list()
-        self.fpga_ver = list()
-        self.hv_lim = list()
-        self.hv_dis = list()
-        self.door_dis = list()
-        self.spare_2 = list()
-        self.sys_temp_1 = list()
-        self.sys_temp2 = list()
-        self.sys_temp_3 = list()
-        self.lvps_temp_1 = list()
-        self.lvps_temp_2 = list()
-        self.lvps_temp3 = list()
-        self.lvps_v1 = list()
-        self.lvps_v2 = list()
-        self.lvps_v3 = list()
-        self.lvps_v4 = list()
-        self.lvps_v5 = list()
-        self.lvps_l1 = list()
-        self.lvps_l2 = list()
-        self.lvps_l3 = list()
-        self.lvps_l4 = list()
-        self.lvps_l5 = list()
-        self.cdh_1p5v = list()
-        self.cdh_1p8v = list()
-        self.cdh_3p3v = list()
-        self.cdh_n12v = list()
-        self.cdh_p12v = list()
-        self.cdh_5v = list()
-        self.cdh_ana_ref = list()
-        self.cdh_temp_1 = list()
-        self.cdh_temp_2 = list()
-        self.cdh_temp_3 = list()
-        self.cdh_temp_4 = list()
-        self.op_mode = list()
-        self.cdm_acc_cnt = list()
-        self.cmd_rej_cnt = list()
-        self.cmd_acc_opc = list()
-        self.cmd_rej_opc = list()
-        self.cmd_result = list()
-        self.itf_err_cnt = list()
 
-    def parse_boot_housekeeping(self, packet):
+    time: int
+    boot_ver: int
+    boot_cnt: int
+    bist_stat: int
+    bist_abus: int
+    bist_dbus: int
+    bist_mem_ff: int
+    bist_mem_fl: int
+    bist_mem_map: int
+    bist_mem_cnt: int
+    img_1_stat: int
+    img_2_stat: int
+    tab_1_stat: int
+    tab_2_stat: int
+    spare_0: int
+    fsw_img_ver: int
+    table_img_ver: int
+    instr_id: int
+    spare_1: int
+    fpga_ver: int
+    hv_lim: int
+    hv_dis: int
+    door_dis: int
+    spare_2: int
+    sys_temp_1: int
+    sys_temp2: int
+    sys_temp_3: int
+    lvps_temp_1: int
+    lvps_temp_2: int
+    lvps_temp3: int
+    lvps_v1: int
+    lvps_v2: int
+    lvps_v3: int
+    lvps_v4: int
+    lvps_v5: int
+    lvps_l1: int
+    lvps_l2: int
+    lvps_l3: int
+    lvps_l4: int
+    lvps_l5: int
+    cdh_1p5v: int
+    cdh_1p8v: int
+    cdh_3p3v: int
+    cdh_n12v: int
+    cdh_p12v: int
+    cdh_5v: int
+    cdh_ana_ref: int
+    cdh_temp_1: int
+    cdh_temp_2: int
+    cdh_temp_3: int
+    cdh_temp_4: int
+    op_mode: int
+    cdm_acc_cnt: int
+    cmd_rej_cnt: int
+    cmd_acc_opc: int
+    cmd_rej_opc: int
+    cmd_result: int
+    itf_err_cnt: int
+
+    def __init__(self, packet, software_version: str, packet_file_name: str):
+        super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+        attributes = [field.name for field in fields(self)]
+
+        # For each item in packet, assign it to the matching attribute in the class.
+        for key, item in packet.data.items():
+            value = (
+                item.derived_value if item.derived_value is not None else item.raw_value
+            )
+            if key in attributes:
+                setattr(self, key, value)
+            else:
+                raise KeyError(
+                    f"Did not find matching attribute in Histogram data class for "
+                    f"{key}"
+                )
+
+    def parse_data(self, packet):
         if packet.header["PKT_APID"].derived_value == LoAPID.BOOT_HK:
             self.time.append(packet.data["SHOCOARSE"].derived_value)
             self.boot_ver.append(packet.data["BOOT_VER"].derived_value)

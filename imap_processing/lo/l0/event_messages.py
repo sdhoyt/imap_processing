@@ -1,4 +1,4 @@
-class EvenMessages:
+class EventMessages:
     def __init__(self):
         self.time = list()
         self.qmsg_cnt = list()
