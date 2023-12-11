@@ -1,68 +1,41 @@
 from loApid import LoAPID
+from dataclasses import dataclass
 
+from imap_processing.ccsds.ccsds_data import CcsdsData
+from imap_processing.lo.l0.lol0 import LoL0
 
+@dataclass
 class DiagnosticBulkHVPS:
-    def __init__(self):
-        self.time = list()
-        self.version_reg = list()
-        self.status_reg = list()
-        self.master_en_reg = list()
-        self.gpo_reg = list()
-        self.dac0_reg = list()
-        self.dac1_reg = list()
-        self.dac2_reg = list()
-        self.dac3_reg = list()
-        self.dac4_reg = list()
-        self.adc_ctrl_status_reg = list()
-        self.adc1_wait_cnt_reg = list()
-        self.adc2_wait_cnt_reg = list()
-        self.hvps_bulk_vmon = list()
-        self.u_neg_vmon = list()
-        self.u_pos_vmon = list()
-        self.def_neg_vmon = list()
-        self.def_pos_vmon = list()
-        self.pmt_vmon = list()
-        self.pmt_imon = list()
-        self.bulk_imon = list()
-        self.def_neg_imon = list()
-        self.def_pos_imon = list()
-        self.ref1_vmon = list()
-        self.ref2_vmon = list()
-        self.p12p0_vmon = list()
-        self.n12p0_vmon = list()
-        self.p3p3_vmon = list()
-        self.p1p5_vmon = list()
+    SHCOARSE: int
+    VERSION: int
+    STATUS: int
+    GPO: int
+    DAC0: int
+    DAC1: int
+    DAC2: int
+    DAC3: int
+    DAC4: int
+    ADC_CTRL_STATUS: int
+    ADC1_WAIT_CNT: int
+    ADC2_WAIT_CNT: int
+    HVPS_BULK_VMON: int
+    U_NEG_VMON: int
+    U_POS_VMON: int
+    DEF_NEG_VMON: int
+    DEF_POS_VMON: int
+    PMT_VMON: int
+    PMT_IMON: int
+    BULK_IMON: int
+    DEF_NEG_IMON: int
+    DEF_POS_IMON: int
+    ADC_REF1_VMON: int
+    ADC_REF2_VMON: int
+    P12P0_VMON: int
+    N12P0_VMON: int
+    P3P3_VMON: int
+    P1P5_VMON: int
+    CHKSUM: int
 
-    def parse_diagnostic_bulk_hvps(self, packet):
-        if packet.header["PKT_APID"].derived_value == LoAPID.BOOT_MEMDMP:
-            self.time.append(packet.data["SHOCOARSE"].derived_value)
-            self.version_reg.append(packet.data["VERSION"].derived_value)
-            self.status_reg.append(packet.data["STATUS"].derived_value)
-            self.master_en_reg.append(packet.data["?"].derived_value)
-            self.gpo_reg.append(packet.data["GPO"].derived_value)
-            self.dac0_reg.append(packet.data["DAC0"].derived_value)
-            self.dac1_reg.append(packet.data["DAC1"].derived_value)
-            self.dac2_reg.append(packet.data["DAC2"].derived_value)
-            self.dac3_reg.append(packet.data["DAC3"].derived_value)
-            self.dac4_reg.append(packet.data["DAC4"].derived_value)
-            self.adc_ctrl_status_reg.append(
-                packet.data["ADC_CTRL_STATUS"].derived_value
-            )
-            self.adc1_wait_cnt_reg.append(packet.data["ADC1_WAIT_CNT"].derived_value)
-            self.adc2_wait_cnt_reg.append(packet.data["ADC2_WAIT_CNT"].derived_value)
-            self.hvps_bulk_vmon.append(packet.data["HVPS_BULK_VMON"].derived_value)
-            self.u_neg_vmon.append(packet.data["U_NEG_VMON"].derived_value)
-            self.u_pos_vmon.append(packet.data["U_POS_VMON"].derived_value)
-            self.def_neg_vmon.append(packet.data["DEF_NEG_VMON"].derived_value)
-            self.def_pos_vmon.append(packet.data["DEF_POS_VMON"].derived_value)
-            self.pmt_vmon.append(packet.data["PMT_VMON"].derived_value)
-            self.pmt_imon.append(packet.data["PMT_IMON"].derived_value)
-            self.bulk_imon.append(packet.data["BULK_IMON"].derived_value)
-            self.def_neg_imon.append(packet.data["DEF_NEG_IMON"].derived_value)
-            self.def_pos_imon.append(packet.data["DEF_POS_IMON"].derived_value)
-            self.ref1_vmon.append(packet.data["ADC_REF1_VMON"].derived_value)
-            self.ref2_vmon.append(packet.data["ADC_REF2_VMON"].derived_value)
-            self.p12p0_vmon.append(packet.data["P12P0_VMON"].derived_value)
-            self.n12p0_vmon.append(packet.data["N12P0_VMON"].derived_value)
-            self.p3p3_vmon.append(packet.data["P3P3_VMON"].derived_value)
-            self.p1p5_vmon.append(packet.data["P1P5_VMON"].derived_value)
+    def __init__(self, packet, software_version: str, packet_file_name: str):
+            super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+            self.parse_data(packet)

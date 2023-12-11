@@ -1,162 +1,290 @@
-class NominalHousekeeping:
-    def __init__(self):
-        self.time = list()
-        self.op_mode = list()
-        self.mem_op_state = list()
-        self.mem_dump_state = list()
-        self.cmd_exe_cnt = list()
-        self.cmd_rej_cnt = list()
-        self.cmd_exe_opc = list()
-        self.itf_err_cnt = list()
-        self.spin_cnt = list()
-        self.missed_pps_cnt = list()
-        self.cpu_util = list()
-        self.watchdog = list()
-        self.sys_temp1 = list()
-        self.sys_temp2 = list()
-        self.sys_temp3 = list()
-        self.lo_temp = list()
-        self.lvps_temp1 = list()
-        self.lvps_temp2 = list()
-        self.lvps_temp3 = list()
-        self.lvps_v1 = list()
-        self.lvps_v2 = list()
-        self.lvps_v3 = list()
-        self.lvps_v4 = list()
-        self.lvps_v5 = list()
-        self.lvps_i1 = list()
-        self.lvps_i2 = list()
-        self.lvps_i3 = list()
-        self.lvps_i4 = list()
-        self.lvps_i5 = list()
-        self.cdh_1p5v = list()
-        self.cdh_1p8v = list()
-        self.cdh_3p3v = list()
-        self.cdh_12vp = list()
-        self.cdh_12vn = list()
-        self.cdh_5v = list()
-        self.cdh_ana_ref = list()
-        self.cdh_temp1 = list()
-        self.cdh_temp2 = list()
-        self.cdh_temp3 = list()
-        self.cdh_temp4 = list()
-        self.sc_cmd_fifo_status = list()
-        self.sc_tlm_fifo_status = list()
-        self.spin_bin_period = list()
-        self.spin_bin_idx = list()
-        self.spin_period = list()
-        self.spin_period_timer = list()
-        self.spin_time_stamp_sec = list()
-        self.spin_time_stamp_subsec = list()
-        self.cdh_heater_status = list()
-        self.instr_pwr_status = list()
-        self.ifb_interface_ctrl_status = list()
-        self.ifb_adc_tlm_status = list()
-        self.ifb_tlm_status = list()
-        self.tof_interface_status = list()
-        self.de_time_tag_ctrl_status = list()
-        self.de_fifo_ctrl_status = list()
-        self.hvps_status = list()
-        self.pivot_interface_ctrl = list()
-        self.pivot_interface_status = list()
-        self.ifb_status = list()
-        self.ifb_cmd_count = list()
-        self.ifb_ctrl = list()
-        self.ifb_data_interval = list()
-        self.tof_hvps_ctrl = list()
-        self.pac_vset = list()
-        self.pac_ocp = list()
-        self.mcp_vset = list()
-        self.mcp_ocp = list()
-        self.star_offset_adjust = list()
-        self.oscope_ch_sel = list()
-        self.ifb_temp1 = list()
-        self.ifb_temp0 = list()
-        self.ifb_v5p0_vm = list()
-        self.ifb_v3p3_vm = list()
-        self.ifb_v12p0_vm = list()
-        self.ifb_v12n0_vm = list()
-        self.lv_cm = list()
-        self.lv_vm = list()
-        self.lv_temp = list()
-        self.mcp_cm = list()
-        self.mcp_vm = list()
-        self.mcp_temp = list()
-        self.pac_cm = list()
-        self.pac_vm = list()
-        self.pac_temp = list()
-        self.ifb_aux_adc = list()
-        self.tof_cmd_error = list()
-        self.tof_cfd_vm = list()
-        self.tof_pre_tm = list()
-        self.tof_tm = list()
-        self.tof_mcp_cm = list()
-        self.tof_mcp_vm = list()
-        self.tof_cm = list()
-        self.tof_p5_vm = list()
-        self.tof_p6_vm = list()
-        self.an_a_thr = list()
-        self.an_b0_thr = list()
-        self.an_b3_thr = list()
-        self.an_c_thr = list()
-        self.tof_bd_ctrl = list()
-        self.stim_ctrl = list()
-        self.stim_cnfg = list()
-        self.an_tof3_thr = list()
-        self.an_tof2_thr = list()
-        self.an_tof1_thr = list()
-        self.an_tof0_thr = list()
-        self.bulk_hvps_status = list()
-        self.bulk_hvps_gpo = list()
-        self.bulk_hvps_dac0 = list()
-        self.bulk_hvps_dac1 = list()
-        self.bulk_hvps_dac2 = list()
-        self.bulk_hvps_dac3 = list()
-        self.bulk_hvps_dac4 = list()
-        self.bulk_hvps_adc_ctrl_status = list()
-        self.bulk_hvps_hvps_bulk_vmon = list()
-        self.bulk_hvps_u_neg_vmon = list()
-        self.bulk_hvps_u_pos_vmon = list()
-        self.bulk_hvps_def_neg_vmon = list()
-        self.bulk_hvps_def_pos_vmon = list()
-        self.bulk_hvps_pmt_vmon = list()
-        self.bulk_hvps_pmt_imon = list()
-        self.bulk_hvps_bulk_imon = list()
-        self.bulk_hvps_def_neg_imon = list()
-        self.bulk_hvps_def_pos_imon = list()
-        self.bulk_hvps_ref1_vmon = list()
-        self.bulk_hvps_ref2_vmon = list()
-        self.bulk_hvps_p12p0_vmon = list()
-        self.bulk_hvps_n12p0_vmon = list()
-        self.bulk_hvps_p3p3_vmon = list()
-        self.bulk_hvps_p1p5_vmon = list()
-        self.pcc_coarse_pot_pri = list()
-        self.pcc_fine_pot_pri = list()
-        self.pcc_coarse_pot_red = list()
-        self.pcc_fine_pot_red = list()
-        self.pcc_actuator_temp = list()
-        self.pcc_pcc_board_temp = list()
-        self.pcc_motor_current_pri = list()
-        self.pcc_motor_current_red = list()
-        self.pcc_cumulative_cnt_pri = list()
-        self.pcc_cumulative_cnt_sgn_pri = list()
-        self.pcc_cumulative_cnt_red = list()
-        self.pcc_cumulative_cnt_sgn_red = list()
-        self.pcc_current_step_cnt_pri = list()
-        self.pcc_current_step_cnt_red = list()
-        self.pcc_current_setpt_pri = list()
-        self.pcc_current_setpt_red = list()
-        self.pcc_status = list()
-        self.macro_status = list()
-        self.fdr_trigger_cnt_cat_1 = list()
-        self.fdr_trigger_cnt_cat_2 = list()
-        self.fdr_trigger_cnt_cat_3 = list()
-        self.fdr_trigger_cnt_cat_4 = list()
-        self.fdr_trigger_cnt_cat_5 = list()
-        self.fdr_trigger_cnt_cat_6 = list()
-        self.fdr_trigger_cnt_cat_7 = list()
-        self.fdr_trigger_cnt_cat_8 = list()
-        self.fdr_last_trigger_minmax = list()
-        self.fdr_last_trigger_id = list()
-        self.fdr_last_trigger_action = list()
-        self.spare = list()
+from dataclasses import dataclass
+
+from loApid import LoAPID
+
+from imap_processing.ccsds.ccsds_data import CcsdsData
+from imap_processing.lo.l0.lol0 import LoL0
+
+@dataclass
+class NominalHousekeeping(LoL0):
+    SHCOARSE: int
+    OP_MODE: int
+    CMD_EXE_CNT: int
+    CMD_REJ_CNT: int
+    CMD_LAST_OPCODE: int
+    ITF_ERR_CNT: int
+    WATCHDOG_CNT: int
+    MDM25P_14_T: int
+    MDM25P_15_T: int
+    MDM25P_16_T: int
+    LO_T: int
+    HVPS_T: int
+    LVPS_12V_T: int
+    LVPS_5V_T: int
+    LVPS_3P3V_T: int
+    LVPS_3P3V: int
+    LVPS_5V: int
+    LVPS_N5V: int
+    LVPS_12V: int
+    LVPS_N12V: int
+    LVPS_3P3V_I: int
+    LVPS_5V_I: int
+    LVPS_N5V_I: int
+    LVPS_12V_I: int
+    LVPS_N12V_I: int
+    CDH_1P5V: int
+    CDH_1P8V: int
+    CDH_3P3V: int
+    CDH_12V: int
+    CDH_N12V: int
+    CDH_5V: int
+    CDH_5V_ADC: int
+    CDH_PROCESSOR_T: int
+    CDH_1P8V_LDO_T: int
+    CDH_1P5V_LDO_T: int
+    CDH_SDRAM_T: int
+    BHV_CTRL: int
+    BHV_STATUS_CMD_PARITY_ERR: int
+    BHV_STATUS_CMD_FRAME_ERR: int
+    BHV_STATUS_TLM_PARITY_ERR: int
+    BHV_STATUS_TLM_FRAME_ERR: int
+    BHV_STATUS_TIMEOUT_ERR: int
+    BHV_STATUS_CNT_ERR: int
+    BHV_SPARE0: int
+    BHV_STATUS_CMD_CNT: int
+    BHV_STATUS_MST_EN: int
+    BHV_STATUS_HV_DS: int
+    BHV_STATUS_HV_LIM: int
+    BHV_STATUS_POR_RST: int
+    BHV_STATUS_PFO_RST: int
+    BHV_STATUS_SOFT_RST: int
+    BHV_BULK_CTRL: int
+    BHV_ESA_POS_CTRL: int
+    BHV_ESA_NEG_CTRL: int
+    BHV_SPARE1: int
+    BHV_ESA_NEG_DAC: int
+    BHV_ESA_POS_DAC: int
+    BHV_DEF_NEG_DAC: int
+    BHV_DEF_POS_DAC: int
+    BHV_PMT_DAC: int
+    BHV_ADC1_CTRL: int
+    BHV_ADC1_MODE: int
+    BHV_ADC1_CH_SEL: int
+    BHV_ADC2_CTRL: int
+    BHV_ADC2_MODE: int
+    BHV_SPARE2: int
+    BHV_ADC2_CH_SEL: int
+    BHV_SPARE3: int
+    BHV_ADC1_WAIT_CNT: int
+    BHV_ADC2_WAIT_CNT: int
+    BHV_BULK_V: int
+    BHV_ESA_NEG_V: int
+    BHV_ESA_POS_V: int
+    BHV_DEF_NEG_V: int
+    BHV_DEF_POS_V: int
+    BHV_PMT_V: int
+    BHV_PMT_I: int
+    BHV_BULK_I: int
+    BHV_DEF_NEG_I: int
+    BHV_DEF_POS_I: int
+    BHV_ADC_REF1_V: int
+    BHV_ADC_REF2_V: int
+    BHV_12P0_V: int
+    BHV_N12P0_V: int
+    BHV_3P3_V: int
+    BHV_1P5_V: int
+    BHV_SPARE4: int
+    MEM_OP_STATE: int
+    MEM_DUMP_STATE: int
+    SPIN_CNT: int
+    MISSED_PPS_CNT: int
+    CPU_UTIL: int
+    CDH_CMD_FIFO_SINGLE_INJ: int
+    CDH_CMD_FIFO_DOUBLE_INJ: int
+    CDH_CMD_FIFO_OVER: int
+    CDH_CMD_FIFO_UNDER: int
+    CDH_CMD_FIFO_FULL: int
+    CDH_CMD_FIFO_HALF: int
+    CDH_CMD_FIFO_EMPTY: int
+    CDH_CMD_FIFO_EDAC_SINGLE: int
+    CDH_CMD_FIFO_EDAC_DOUBLE: int
+    CDH_CMD_FIFO_PARITY_ERROR: int
+    CDH_CMD_FIFO_FRAME_ERROR: int
+    CDH_TLM_FIFO_SINGLE_INJ: int
+    CDH_TLM_FIFO_DOUBLE_INJ: int
+    CDH_TLM_FIFO_OVER: int
+    CDH_TLM_FIFO_UNDER: int
+    CDH_TLM_FIFO_FULL: int
+    CDH_TLM_FIFO_HALF: int
+    CDH_TLM_FIFO_EMPTY: int
+    CDH_TLM_FIFO_EDAC_SINGLE: int
+    CDH_TLM_FIFO_EDAC_DOUBLE: int
+    CDH_TLM_FIFO_LOOPBACK: int
+    BHV_SPARE5: int
+    SPIN_BIN_IDX: int
+    BHV_SPARE6: int
+    SPIN_PERIOD: int
+    CDH_HEATER_1: int
+    CDH_HEATER_2: int
+    INSTR_PWR_12V: int
+    INSTR_PWR_ANALOG_5V: int
+    INSTR_PWR_DIGITAL_5V_3P3V: int
+    IFB_CMD_ERROR: int
+    IFB_INTERFACE: int
+    STAR_FIFO_UNDER: int
+    STAR_FIFO_OVER: int
+    STAR_FIFO_FULL: int
+    STAR_FIFO_HALF: int
+    STAR_FIFO_EMPTY: int
+    IFB_ADC_TLM_PKT_RCVD: int
+    IFB_ADC_TLM_TIMEOUT_ERROR: int
+    IFB_ADC_TLM_ID_ERROR: int
+    IFB_ADC_TLM_FRAME_ERROR: int
+    IFB_TLM_PKT_RCVD: int
+    IFB_TLM_TIMEOUT_ERROR: int
+    IFB_TLM_ID_ERROR: int
+    IFB_TLM_FRAME_ERROR: int
+    TOF_BD_TLM_PKT_RCVD: int
+    TOF_BD_ADC_TLM_PKT_RCVD: int
+    TOF_BD_REG_TLM_PKT_RCVD: int
+    TOF_BD_CNT_TLM_PKT_RCVD: int
+    TOF_BD_DE_TLM_PKT_RCVD: int
+    TOF_BD_TLM_TIMEOUT_ERROR: int
+    TOF_BD_TLM_ID_ERROR: int
+    TOF_BD_TLM_FRAME_ERROR: int
+    DIRECT_EVENT_TIME_TAG_ROLL: int
+    DIRECT_EVENT_TIME_TAG: int
+    BHV_SPARE7: int
+    DIRECT_EVENT_TIME_TAG_CNT: int
+    BHV_SPARE8: int
+    DIRECT_EVENT_FIFO_CNT: int
+    BHV_SPARE9: int
+    DIRECT_EVENT_FIFO_OVER: int
+    DIRECT_EVENT_FIFO_UNDER: int
+    DIRECT_EVENT_FIFO_FULL: int
+    DIRECT_EVENT_FIFO_HALF: int
+    DIRECT_EVENT_FIFO_EMPTY: int
+    PCC_INTERFACE: int
+    PPC_TLM_TIMEOUT_ERROR: int
+    PPC_TLM_PARITY_ERROR: int
+    PPC_TLM_PKT_RCVD: int
+    IFB_STATUS_HV_DS: int
+    IFB_STATUS_HV_LIM: int
+    BHV_SPARE10: int
+    IFB_CMD_COUNT: int
+    IFB_CTRL_INT_MUX: int
+    IFB_CTRL_ADC_CLK_DS: int
+    IFB_CTRL_OSCOPE: int
+    IFB_CTRL_STAR_SYNC: int
+    IFB_CTRL_DATA: int
+    BHV_SPARE11: int
+    IFB_DATA_INTERVAL: int
+    TOF_HVPS_CTRL_SYNC_CLK: int
+    TOF_HVPS_CTRL_PAC: int
+    TOF_HVPS_CTRL_MCP: int
+    TOF_HVPS_CTRL_LV: int
+    BHV_SPARE12: int
+    PAC_VSET: int
+    PAC_OCP: int
+    MCP_VSET: int
+    MCP_OCP: int
+    STAR_OFFSET_ADJUST: int
+    IFB_OSCOPE_CH0: int
+    IFB_OSCOPE_CH1: int
+    IFB_HOT_SPOT_T: int
+    IFB_COLD_SPOT_T: int
+    IFB_5P0_V: int
+    IFB_3P3_V: int
+    IFB_12P0_V: int
+    IFB_N12P0_V: int
+    LV_I: int
+    LV_V: int
+    LV_T: int
+    MCP_I: int
+    MCP_V: int
+    MCP_T: int
+    PAC_I: int
+    PAC_V: int
+    PAC_T: int
+    TOF_CMD_ERROR: int
+    TOF_CFD_V: int
+    TOF_PRE_T: int
+    TOF_REG_T: int
+    TOF_MCP_I: int
+    TOF_MCP_V: int
+    TOF_BD_I: int
+    TOF_BD_P5_V: int
+    TOF_BD_P6_V: int
+    AN_A_THR: int
+    AN_B0_THR: int
+    AN_B3_THR: int
+    AN_C_THR: int
+    TOF_BD_CTRL_TLM: int
+    TOF_BD_CTRL_DE_TLM: int
+    TOF_BD_CTRL_TOF3_REQ: int
+    TOF_BD_CTRL_TOF2_REQ: int
+    TOF_BD_CTRL_TOF1_REQ: int
+    TOF_BD_CTRL_TOF0_REQ: int
+    STIM_CTRL_AN_C: int
+    STIM_CTRL_AN_C_PULSE: int
+    STIM_CTRL_AN_B3: int
+    STIM_CTRL_AN_B3_PULSE: int
+    STIM_CTRL_AN_B0: int
+    STIM_CTRL_AN_B0_PULSE: int
+    STIM_CTRL_AN_A: int
+    STIM_CTRL_AN_A_PULSE: int
+    BHV_SPARE13: int
+    STIM_CNFG_FREQ: int
+    STIM_CNFG_DELAY: int
+    TOF3_THR: int
+    TOF2_THR: int
+    TOF1_THR: int
+    TOF0_THR: int
+    TOF3_VETO: int
+    TOF2_VETO: int
+    TOF1_VETO: int
+    TOF0_VETO: int
+    BHV_SPARE14: int
+    PCC_COARSE_POT_PRI: int
+    PCC_FINE_POT_PRI: int
+    PCC_COARSE_POT_RED: int
+    PCC_FINE_POT_RED: int
+    PCC_ACTUATOR_T: int
+    PCC_BOARD_T: int
+    PCC_MOTOR_CURRENT_PRI: int
+    PCC_MOTOR_CURRENT_RED: int
+    PCC_CUMULATIVE_CNT_PRI: int
+    PCC_CUMULATIVE_CNT_SGN_PRI: int
+    PCC_CUMULATIVE_CNT_RED: int
+    PCC_CUMULATIVE_CNT_SGN_RED: int
+    PCC_CURRENT_STEP_CNT_PRI: int
+    PCC_CURRENT_STEP_CNT_RED: int
+    PCC_CURRENT_SETPT_PRI: int
+    PCC_CURRENT_SETPT_RED: int
+    PCC_PRI_ACTIVE: int
+    PCC_PRI_POWERED: int
+    PCC_PRI_USTEP: int
+    PCC_PRI_ACCEL: int
+    PCC_RED_ACTIVE: int
+    PCC_RED_POWERED: int
+    PCC_RED_USTEP: int
+    PCC_RED_ACCEL: int
+    PCC_STALL: int
+    MACRO_STATUS: int
+    FDR_TRIGGER_CNT_CAT_1: int
+    FDR_TRIGGER_CNT_CAT_2: int
+    FDR_TRIGGER_CNT_CAT_3: int
+    FDR_TRIGGER_CNT_CAT_4: int
+    FDR_TRIGGER_CNT_CAT_5: int
+    FDR_TRIGGER_CNT_CAT_6: int
+    FDR_TRIGGER_CNT_CAT_7: int
+    FDR_TRIGGER_CNT_CAT_8: int
+    FDR_LAST_TRIGGER_MINMAX: int
+    FDR_LAST_TRIGGER_ID: int
+    FDR_LAST_TRIGGER_ACTION: int
+    SPARE: int
+    CHKSUM: int
+
+    def __init__(self, packet, software_version: str, packet_file_name: str):
+            super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+            self.parse_data(packet)
