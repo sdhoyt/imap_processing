@@ -22,6 +22,14 @@ class LoL0:
     ccsds_header: CcsdsData
 
     def parse_data(self, packet):
+        """
+        Parse data contained in a single packet.
+
+        Parameters
+        ----------
+        packet: dict
+            dicationary for a single packet from space packet parser
+        """
         attributes = [field.name for field in fields(self)]
 
         # For each item in packet, assign it to the matching attribute in the class.
@@ -34,6 +42,6 @@ class LoL0:
                 setattr(self, key, value)
             else:
                 raise KeyError(
-                    f"Did not find matching attribute in {self.__class__} data class for "
-                    f"{key}"
+                    f"Did not find matching attribute in {self.__class__} data class"
+                    f"for {key}"
                 )
