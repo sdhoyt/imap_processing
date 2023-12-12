@@ -1,12 +1,24 @@
 from dataclasses import dataclass
 
-from loApid import LoAPID
-
 from imap_processing.ccsds.ccsds_data import CcsdsData
 from imap_processing.lo.l0.lol0 import LoL0
 
+
 @dataclass
 class Autonomy(LoL0):
+    """Data class for the Autonomy packet data
+
+    Attributes
+    ----------
+    SHCOARSE : int 
+        Spacecraft time
+
+    Methods
+    -------
+    
+
+    """
+
     SHCOARSE: int
     SPARE: int
     POWER_CYCLE_REQ: int

@@ -1,13 +1,12 @@
 from dataclasses import dataclass
 
-from loApid import LoAPID
-
 from imap_processing.ccsds.ccsds_data import CcsdsData
 from imap_processing.lo.l0.lol0 import LoL0
 
+
 @dataclass
 class RawCounts(LoL0):
-    #TODO: Should the ACCUM_MS numbers be stored as arrays or kept as separate variables?
+    # TODO: Should the ACCUM_MS numbers be stored as arrays or kept as separate variables?
     SHCOARSE: int
     MET_SUB: int
     START_A: int
@@ -77,5 +76,5 @@ class RawCounts(LoL0):
     CHKSUM: int
 
     def __init__(self, packet, software_version: str, packet_file_name: str):
-            super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
-            self.parse_data(packet)
+        super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+        self.parse_data(packet)

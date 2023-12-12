@@ -1,9 +1,8 @@
 from dataclasses import dataclass
 
-from loApid import LoAPID
-
 from imap_processing.ccsds.ccsds_data import CcsdsData
 from imap_processing.lo.l0.lol0 import LoL0
+
 
 @dataclass
 class RawDirectEvents(LoL0):
@@ -11,6 +10,15 @@ class RawDirectEvents(LoL0):
     PAC_VM: int
     MCP_VM: int
     PKT_CNT: int
-    # TODO: RAW_DE not parsed from CCSDS. Need to add code to parse this
+    # TODO: RAW_DE is binary from CCSDS. Need to add code to parse this in a method
     RAW_DE: str
     CHKSUM: int
+    COUNT: int
+    DE_TIME: int
+    TOF0: int
+    TOF2: int
+    TOF3: int
+
+    def __init__(self, packet, software_version: str, packet_file_name: str):
+        super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+        self.parse_data(packet)

@@ -1,16 +1,29 @@
-class SpinData:
-    def __init__(self):
-        self.time = list()
-        self.num_completed = list()
-        self.spare1 = list()
-        self.acq_end_sec = list()
-        self.acq_end_subsec = list()
-        self.spare2 = list()
-        self.start_time_seconds = list()
-        self.start_time_subseconds = list()
-        self.esa_p = list()
-        self.esa_n = list()
-        self.valid_period = list()
-        self.valid_phase = list()
-        self.source = list()
-        self.spare = list()
+from dataclasses import dataclass
+
+from imap_processing.ccsds.ccsds_data import CcsdsData
+from imap_processing.lo.l0.lol0 import LoL0
+
+
+@dataclass
+class SpinData(LoL0):
+    SHCOARSE: int
+    NUM_COMPLETED: int
+    SPARE1: int
+    ACQ_END_SEC: int
+    ACQ_END_SUBSEC: int
+    SPARE2: int
+    # TODO: will probably need to read this whole chunk of data
+    # as binary from the CCSDS and parse within the file since each
+    # data index is a separate field
+    SPIN_SECOND: list()
+    SPIN_SUBSEC: list()
+    ESA_P_DAC: list()
+    ESA_N_DAC: list()
+    VAL_PERIOD: list()
+    VAL_SPIN: list()
+    SOURCE: list()
+    RESERVED: list()
+
+    def __init__(self, packet, software_version: str, packet_file_name: str):
+        super().__init__(software_version, packet_file_name, CcsdsData(packet.header))
+        self.parse_data(packet)
