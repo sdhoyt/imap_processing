@@ -3,10 +3,26 @@ from pathlib import Path
 
 from imap_processing import decom
 
-# from diagnostic_interface_board import DiagnosticInterfaceBoard
-# from event_messages import EventMessages
-# from nominal_housekeeping import NominalHousekeeping
-# from static_housekeeping import StaticHousekeeping
+from autonomy import Autonomy
+from boot_housekeeping import BootHousekeeping
+from boot_memory_dump import BootMemoryDump
+from diagnostic_bulk_hvps import DiagnosticBulkHVPS
+from diagnostic_cdh import DiagnosticCDH
+from diagnostic_interface_board import DiagnosticInterfaceBoard
+from diagnostic_pcc import DiagnosticPCC
+from diagnostic_tof_board import DiagnosticTOFBoard
+from event_messages import EventMessages
+from memory_dump import MemoryDump
+from nominal_housekeeping import NominalHousekeeping
+from raw_counts import RawCounts
+from raw_direct_events import RawDirectEvents
+from raw_star_sensor import RawStarSensor
+from science_counts import ScienceCounts
+from spin_data import Spin
+from star_sensor_data import StarSensor
+from static_housekeeping import StaticHousekeeping
+
+from imap_processing.lo.l0.lo_l0_container import LoL0Container
 from imap_processing.lo import version
 from imap_processing.lo.l0.boot_housekeeping import BootHousekeeping
 from imap_processing.lo.l0.loApid import LoAPID
@@ -51,91 +67,51 @@ def decom_lo_packets(packet_file: str, xtce: str):
         filtered_packets, key=lambda x: x.data["SHCOARSE"].derived_value
     )
     filename = Path(packet_file).name
+    l0_data = LoL0Container()
 
     for packet in sorted_packets:
         apid = packet.header["PKT_APID"].derived_value
-        print("LOOKING FOR BOOTHK")
-        if apid == LoAPID.BOOT_HK:
-            print("GOT BOOTHK")
-            BootHousekeeping(packet, version, filename)
-
-    # return book_hk
-    # Store data for each apid
-    # unpacked_data =
-    #   {apid0: {var0: [item0, item1, ...], var1: [item0, item1, ...]}, ...}
-    # unpacked_data = {}
-
-    # bhk.parse_data(sorted_packets)
-
-    # for apid_name, apid in [(id.name, id.value) for id in LoAPID]:
-    #     # TODO: if science packet, do decompression
-    #     logging.info(f"Grouping packet values for {apid_name}:{apid}")
-    #     # get all the packets for this apid and groups them together in a
-    #     # dictionary
-    #     unpacked_data[apid_name] = group_apid_data(sorted_packets, apid)
-    #     logging.info(f"Finished grouping {apid_name}:{apid} packet values")
-
-    # create datasets
-    # logging.info("Creating a dataset for Lo L1A data")
-    # dataset_dict = create_datasets(unpacked_data)
-    # logging.info("Lo L1A dataset created")
-    # return dataset_dict
-
-
-# def create_datasets(data):
-#     """
-#     Create a dataset for each APID in the data.
-
-#     Parameters
-#     ----------
-#     data : dict
-#         A single dictionary containing data for all instances of an APID.
-
-#     Returns
-#     -------
-#     dict
-#         A dictionary containing xr.Dataset for each APID. each dataset in the
-#         dictionary will be converted to a CDF.
-#     """
-#     dataset_dict = defaultdict(list)
-#     # create one dataset for each APID in the data
-#     for apid, data_dict in data.items():
-#         # if data for the APID exists, create the dataset
-#         if data_dict != {}:
-#             epoch = xr.DataArray(
-#                 name="Epoch", data=data_dict.pop("SHCOARSE"), dims=("Epoch")
-#             )
-#             dataset = xr.Dataset(data_vars={}, coords={"Epoch": epoch})
-#             dataset_dict[apid] = dataset.assign(**data_dict)
-
-#     return dataset_dict
-
-
-# def group_apid_data(packets, apid):
-#     """
-#     Create a dictionary of lists containing all the data for the APID.
-
-#     If packets contain N of the same APIDs, the data for those N
-#     matching APIDs will be grouped together into a dictionary of lists.
-
-#     Parameters
-#     ----------
-#     packets : list
-#         List of all the unpacked data from decom.decom_packets()
-#     apid : int
-#         APID number for the data you want to group together
-
-#     Returns
-#     -------
-#     dict
-#         A dictionary where each field in the specified APID
-#         is a key, and the value for that key is a list of
-#         that fields values in all packets within the CCSDS file
-#     """
-#     data_dict = defaultdict(list)
-#     for packet in packets:
-#         if packet.header["PKT_APID"].derived_value == apid:
-#             for field in packet.data:
-#                 # put the value of the field in a dictionary
-#                 data_dict[field].append(packet.data[field].derived_value)
-#     return data_dict
+        if apid == LoAPID.ILO_BOOT_HK:
+            l0_data.append(BootHousekeeping(packet, version, filename))
+        elif apid == LoAPID.ILO_BOOT_MEMDMP:
+            l0_data.append(BootMemoryDump(packet, version, filename))
+        elif apid == LoAPID.ILO_APP_NHK:
+            l0_data.append(NominalHousekeeping(packet, version, filename))
+        elif apid == LoAPID.ILO_APP_SHK:
+            l0_data.append(StaticHousekeeping(packet, version, filename))
+        elif apid == LoAPID.ILO_AUTO:
+           l0_data.append(Autonomy(packet, version, filename))
+        elif apid == LoAPID.ILO_DIAG_BULK_HVPS:
+           l0_data.append(DiagnosticBulkHVPS(packet, version, filename))
+        elif apid == LoAPID.ILO_DIAG_CDH:
+            l0_data.append(DiagnosticCDH(packet, version, filename))
+        elif apid == LoAPID.ILO_DIAG_IFB:
+            l0_data.append(DiagnosticInterfaceBoard(packet, version, filename))
+        elif apid == LoAPID.ILO_DIAG_PCC:
+            l0_data.append(DiagnosticPCC(packet, version, filename))
+        elif apid == LoAPID.ILO_DIAG_TOF_BD:
+            l0_data.append(DiagnosticTOFBoard(packet, version, filename))
+        elif apid == LoAPID.ILO_EVTMSG:
+            l0_data.append(EventMessages(packet, version, filename))
+        elif apid == LoAPID.ILO_MEMDMP:
+            l0_data.append(MemoryDump(packet, version, filename))
+        elif apid == LoAPID.ILO_RAW_CNT:
+            l0_data.append(RawCounts(packet, version, filename))
+        elif apid == LoAPID.ILO_RAW_DE:
+           l0_data.append(RawDirectEvents(packet, version, filename))
+        elif apid == LoAPID.ILO_RAW_STAR:
+            l0_data.append(RawStarSensor(packet, version, filename))
+        elif apid == LoAPID.ILO_SCI_CNT:
+            l0_data.append(ScienceCounts(packet, version, filename))
+        elif apid == LoAPID.ILO_SCI_DE:
+            #TODO: The SCI DE class will be added in a separate PR specifically
+            # for SCI DE compression
+            pass
+        elif apid == LoAPID.ILO_SPIN:
+            l0_data.append(Spin(packet, version, filename))
+        elif apid == LoAPID.ILO_STAR:
+            l0_data.append(StarSensor(packet, version, filename))
+        else:
+            raise Exception(f"lo_l1a_decom.py - The APID {apid} is not valid for Lo")
+        
+        #TODO: orgnaize data in dataclasses into CDFs

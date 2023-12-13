@@ -5,8 +5,8 @@ class LoAPID(IntEnum):
     """IMAP-Lo APIDs."""
 
     ILO_AUTO = 672  # Boot housekeeping
-    BOOT_HK = 673  # Boot memory dump
-    BOOT_MEMDMP = 674  # Autonomy
+    ILO_BOOT_HK = 673  # Boot memory dump
+    ILO_BOOT_MEMDMP = 674  # Autonomy
     ILO_APP_SHK = 676  # Static housekeeping (values that don't change)
     ILO_APP_NHK = 677  # Nominal housekeeping (engineering, health and status)
     ILO_EVTMSG = 678  # Event message

@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
 
 from imap_processing.ccsds.ccsds_data import CcsdsData
-
+from imap_processing.lo.l0.loApid import LoAPID
 
 @dataclass
 class LoL0:
@@ -20,6 +20,7 @@ class LoL0:
     ground_sw_version: str
     packet_file_name: str
     ccsds_header: CcsdsData
+    APID: int
 
     def parse_data(self, packet):
         """
