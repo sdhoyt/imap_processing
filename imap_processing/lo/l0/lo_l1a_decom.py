@@ -1,8 +1,6 @@
 import logging
 from pathlib import Path
 
-from imap_processing import decom
-
 from autonomy import Autonomy
 from boot_housekeeping import BootHousekeeping
 from boot_memory_dump import BootMemoryDump
@@ -22,9 +20,10 @@ from spin_data import Spin
 from star_sensor_data import StarSensor
 from static_housekeeping import StaticHousekeeping
 
-from imap_processing.lo.l0.lo_l0_container import LoL0Container
+from imap_processing import decom
 from imap_processing.lo import version
 from imap_processing.lo.l0.boot_housekeeping import BootHousekeeping
+from imap_processing.lo.l0.lo_l0_container import LoL0Container
 from imap_processing.lo.l0.loApid import LoAPID
 
 logging.basicConfig(level=logging.INFO)
@@ -80,9 +79,9 @@ def decom_lo_packets(packet_file: str, xtce: str):
         elif apid == LoAPID.ILO_APP_SHK:
             l0_data.append(StaticHousekeeping(packet, version, filename))
         elif apid == LoAPID.ILO_AUTO:
-           l0_data.append(Autonomy(packet, version, filename))
+            l0_data.append(Autonomy(packet, version, filename))
         elif apid == LoAPID.ILO_DIAG_BULK_HVPS:
-           l0_data.append(DiagnosticBulkHVPS(packet, version, filename))
+            l0_data.append(DiagnosticBulkHVPS(packet, version, filename))
         elif apid == LoAPID.ILO_DIAG_CDH:
             l0_data.append(DiagnosticCDH(packet, version, filename))
         elif apid == LoAPID.ILO_DIAG_IFB:
@@ -98,13 +97,13 @@ def decom_lo_packets(packet_file: str, xtce: str):
         elif apid == LoAPID.ILO_RAW_CNT:
             l0_data.append(RawCounts(packet, version, filename))
         elif apid == LoAPID.ILO_RAW_DE:
-           l0_data.append(RawDirectEvents(packet, version, filename))
+            l0_data.append(RawDirectEvents(packet, version, filename))
         elif apid == LoAPID.ILO_RAW_STAR:
             l0_data.append(RawStarSensor(packet, version, filename))
         elif apid == LoAPID.ILO_SCI_CNT:
             l0_data.append(ScienceCounts(packet, version, filename))
         elif apid == LoAPID.ILO_SCI_DE:
-            #TODO: The SCI DE class will be added in a separate PR specifically
+            # TODO: The SCI DE class will be added in a separate PR specifically
             # for SCI DE compression
             pass
         elif apid == LoAPID.ILO_SPIN:
@@ -113,5 +112,5 @@ def decom_lo_packets(packet_file: str, xtce: str):
             l0_data.append(StarSensor(packet, version, filename))
         else:
             raise Exception(f"lo_l1a_decom.py - The APID {apid} is not valid for Lo")
-        
-        #TODO: orgnaize data in dataclasses into CDFs
+
+        # TODO: orgnaize data in dataclasses into CDFs

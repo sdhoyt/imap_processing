@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
 from imap_processing.ccsds.ccsds_data import CcsdsData
-from imap_processing.lo.l0.lol0 import LoL0
 from imap_processing.lo.l0.loApid import LoAPID
+from imap_processing.lo.l0.lol0 import LoL0
+
 
 @dataclass
 class RawCounts(LoL0):
@@ -75,6 +76,11 @@ class RawCounts(LoL0):
     MCP_VM: int
     CHKSUM: int
 
-    def __init__(self, packet, software_version: str, packet_file_name: str, apid:int):
-        super().__init__(software_version, packet_file_name, CcsdsData(packet.header), LoAPID.ILO_RAW_CNT)
+    def __init__(self, packet, software_version: str, packet_file_name: str, apid: int):
+        super().__init__(
+            software_version,
+            packet_file_name,
+            CcsdsData(packet.header),
+            LoAPID.ILO_RAW_CNT,
+        )
         self.parse_data(packet)

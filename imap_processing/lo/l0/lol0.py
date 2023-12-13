@@ -1,7 +1,7 @@
 from dataclasses import dataclass, fields
 
 from imap_processing.ccsds.ccsds_data import CcsdsData
-from imap_processing.lo.l0.loApid import LoAPID
+
 
 @dataclass
 class LoL0:

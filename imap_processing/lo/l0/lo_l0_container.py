@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from imap_processing.lo.l0.loApid import LoAPID
+
 
 @dataclass
 class LoL0Container:
