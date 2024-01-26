@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <xtce:SpaceSystem xmlns:xtce="http://www.omg.org/space/xtce" name="P_ILO_AUTO">
-	<xtce:Header date="2023-10" version="1.0" author="IMAP SDC" />
+	<xtce:Header date="2023-11" version="1.0" author="IMAP SDC" />
 	<xtce:TelemetryMetaData>
 		<xtce:ParameterTypeSet>
 			<xtce:IntegerParameterType name="UINT1" signed="false">

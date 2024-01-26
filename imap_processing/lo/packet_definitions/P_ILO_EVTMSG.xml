@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <xtce:SpaceSystem xmlns:xtce="http://www.omg.org/space/xtce" name="P_ILO_EVTMSG">
-	<xtce:Header date="2023-10" version="1.0" author="IMAP SDC" />
+	<xtce:Header date="2023-11" version="1.0" author="IMAP SDC" />
 	<xtce:TelemetryMetaData>
 		<xtce:ParameterTypeSet>
 			<xtce:IntegerParameterType name="UINT1" signed="false">
@@ -106,7 +106,7 @@
 				<xtce:ShortDescription>Event parameter 9</xtce:ShortDescription>
 				<xtce:LongDescription>Parameter describing error depends on error code</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="CHKSUM" parameterTypeRef="UINT8">
+			<xtce:Parameter name="CHKSUM" parameterTypeRef="UINT16">
 				<xtce:ShortDescription>16-bit CRC checksum</xtce:ShortDescription>
 				<xtce:LongDescription>16-bit CRC checksum</xtce:LongDescription>
 			</xtce:Parameter>

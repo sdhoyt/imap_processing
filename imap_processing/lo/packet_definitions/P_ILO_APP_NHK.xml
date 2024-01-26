@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <xtce:SpaceSystem xmlns:xtce="http://www.omg.org/space/xtce" name="P_ILO_APP_NHK">
-	<xtce:Header date="2023-10" version="1.0" author="IMAP SDC" />
+	<xtce:Header date="2023-11" version="1.0" author="IMAP SDC" />
 	<xtce:TelemetryMetaData>
 		<xtce:ParameterTypeSet>
 			<xtce:IntegerParameterType name="UINT1" signed="false">
@@ -74,16 +74,16 @@
 			<xtce:Parameter name="OP_MODE" parameterTypeRef="UINT8">
 				<xtce:ShortDescription>Current operating mode</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="CMD_EXE_CNT" parameterTypeRef="UINT4">
+			<xtce:Parameter name="CMD_EXE_CNT" parameterTypeRef="UINT8">
 				<xtce:ShortDescription>Accepted commands count</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="CMD_REJ_CNT" parameterTypeRef="UINT4">
+			<xtce:Parameter name="CMD_REJ_CNT" parameterTypeRef="UINT8">
 				<xtce:ShortDescription>Rejected commands count</xtce:ShortDescription>
 			</xtce:Parameter>
 			<xtce:Parameter name="CMD_LAST_OPCODE" parameterTypeRef="UINT16">
 				<xtce:ShortDescription>Last accepted command opcode</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="ITF_ERR_CNT" parameterTypeRef="UINT16">
+			<xtce:Parameter name="ITF_ERR_CNT" parameterTypeRef="UINT8">
 				<xtce:ShortDescription>ITF Error count</xtce:ShortDescription>
 			</xtce:Parameter>
 			<xtce:Parameter name="WATCHDOG_CNT" parameterTypeRef="UINT16">
@@ -614,11 +614,11 @@
 			<xtce:Parameter name="STAR_OFFSET_ADJUST" parameterTypeRef="UINT8">
 				<xtce:ShortDescription>Star sensor offset adjust</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="IFB_OSCOPE_CH0" parameterTypeRef="UINT4">
-				<xtce:ShortDescription>IFB oscope channel 0 selection</xtce:ShortDescription>
-			</xtce:Parameter>
 			<xtce:Parameter name="IFB_OSCOPE_CH1" parameterTypeRef="UINT4">
 				<xtce:ShortDescription>IFB oscope channel 1 selection</xtce:ShortDescription>
+			</xtce:Parameter>
+			<xtce:Parameter name="IFB_OSCOPE_CH0" parameterTypeRef="UINT4">
+				<xtce:ShortDescription>IFB oscope channel 0 selection</xtce:ShortDescription>
 			</xtce:Parameter>
 			<xtce:Parameter name="IFB_HOT_SPOT_T" parameterTypeRef="UINT16">
 				<xtce:ShortDescription>IFB temperature hot spot between FPGA and 2P5V regulator</xtce:ShortDescription>
@@ -722,28 +722,28 @@
 			<xtce:Parameter name="TOF_BD_CTRL_TOF0_REQ" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Control valid TOF0 required</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_C" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_C_STATE" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode C state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_C_PULSE" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_C_SRC" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode C pulse state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_B3" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_B3_STATE" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode B3 state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_B3_PULSE" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_B3_SRC" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode B3 pulse state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_B0" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_B0_STATE" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode B0 state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_B0_PULSE" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_B0_SRC" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode B0 pulse state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_A" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_A_STATE" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode A state</xtce:ShortDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="STIM_CTRL_AN_A_PULSE" parameterTypeRef="UINT1">
+			<xtce:Parameter name="STIM_CTRL_AN_A_SRC" parameterTypeRef="UINT1">
 				<xtce:ShortDescription>TOF Board Stimulus Control Anode A pulse state</xtce:ShortDescription>
 			</xtce:Parameter>
 			<xtce:Parameter name="BHV_SPARE13" parameterTypeRef="UINT2">
@@ -862,9 +862,7 @@
 			</xtce:Parameter>
 			<xtce:Parameter name="FDR_TRIGGER_CNT_CAT_1" parameterTypeRef="UINT2">
 				<xtce:ShortDescription>Indicates whether any CATEGORY 1 limits have triggered</xtce:ShortDescription>
-				<xtce:LongDescription>Indicates whether any CATEGORY 1 limits have triggered.
-
-  2 bits: 0: No triggers; 1: One trigger, 2: Two triggers, 3: More than two triggers</xtce:LongDescription>
+				<xtce:LongDescription>Indicates whether any CATEGORY 1 limits have triggered.  2 bits: 0: No triggers; 1: One trigger, 2: Two triggers, 3: More than two triggers</xtce:LongDescription>
 			</xtce:Parameter>
 			<xtce:Parameter name="FDR_TRIGGER_CNT_CAT_2" parameterTypeRef="UINT2">
 				<xtce:ShortDescription>Indicates whether any CATEGORY 2 limits have triggered</xtce:ShortDescription>
@@ -1104,8 +1102,8 @@
 					<xtce:ParameterRefEntry parameterRef="MCP_VSET" />
 					<xtce:ParameterRefEntry parameterRef="MCP_OCP" />
 					<xtce:ParameterRefEntry parameterRef="STAR_OFFSET_ADJUST" />
-					<xtce:ParameterRefEntry parameterRef="IFB_OSCOPE_CH0" />
 					<xtce:ParameterRefEntry parameterRef="IFB_OSCOPE_CH1" />
+					<xtce:ParameterRefEntry parameterRef="IFB_OSCOPE_CH0" />
 					<xtce:ParameterRefEntry parameterRef="IFB_HOT_SPOT_T" />
 					<xtce:ParameterRefEntry parameterRef="IFB_COLD_SPOT_T" />
 					<xtce:ParameterRefEntry parameterRef="IFB_5P0_V" />
@@ -1140,14 +1138,14 @@
 					<xtce:ParameterRefEntry parameterRef="TOF_BD_CTRL_TOF2_REQ" />
 					<xtce:ParameterRefEntry parameterRef="TOF_BD_CTRL_TOF1_REQ" />
 					<xtce:ParameterRefEntry parameterRef="TOF_BD_CTRL_TOF0_REQ" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_C" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_C_PULSE" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B3" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B3_PULSE" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B0" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B0_PULSE" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_A" />
-					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_A_PULSE" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_C_STATE" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_C_SRC" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B3_STATE" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B3_SRC" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B0_STATE" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_B0_SRC" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_A_STATE" />
+					<xtce:ParameterRefEntry parameterRef="STIM_CTRL_AN_A_SRC" />
 					<xtce:ParameterRefEntry parameterRef="BHV_SPARE13" />
 					<xtce:ParameterRefEntry parameterRef="STIM_CNFG_FREQ" />
 					<xtce:ParameterRefEntry parameterRef="STIM_CNFG_DELAY" />
