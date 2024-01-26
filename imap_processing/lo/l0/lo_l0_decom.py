@@ -1,3 +1,4 @@
+"""IMAP-Lo L0 Decommutation."""
 import logging
 from pathlib import Path
 
@@ -16,13 +17,13 @@ from raw_counts import RawCounts
 from raw_direct_events import RawDirectEvents
 from raw_star_sensor import RawStarSensor
 from science_counts import ScienceCounts
+from science_direct_events import ScienceDirectEvents
 from spin_data import Spin
 from star_sensor_data import StarSensor
 from static_housekeeping import StaticHousekeeping
 
 from imap_processing import decom
 from imap_processing.lo import version
-from imap_processing.lo.l0.boot_housekeeping import BootHousekeeping
 from imap_processing.lo.l0.lo_l0_container import LoL0Container
 from imap_processing.lo.l0.loApid import LoAPID
 
@@ -103,9 +104,7 @@ def decom_lo_packets(packet_file: str, xtce: str):
         elif apid == LoAPID.ILO_SCI_CNT:
             l0_data.append(ScienceCounts(packet, version, filename))
         elif apid == LoAPID.ILO_SCI_DE:
-            # TODO: The SCI DE class will be added in a separate PR specifically
-            # for SCI DE compression
-            pass
+            l0_data.append(ScienceDirectEvents(packet, version, filename))
         elif apid == LoAPID.ILO_SPIN:
             l0_data.append(Spin(packet, version, filename))
         elif apid == LoAPID.ILO_STAR:
