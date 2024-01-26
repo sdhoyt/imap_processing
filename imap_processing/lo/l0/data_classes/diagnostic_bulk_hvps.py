@@ -44,3 +44,5 @@ class DiagnosticBulkHVPS:
             LoAPID.ILO_DIAG_BULK_HVPS,
         )
         self.parse_data(packet)
+
+# TODO: Add Decompression

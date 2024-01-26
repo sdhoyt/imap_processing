@@ -103,3 +103,5 @@ class DiagnosticCDH(LoL0):
             LoAPID.ILO_DIAG_CDH,
         )
         self.parse_data(packet)
+
+# TODO: Add Decompression

@@ -84,3 +84,5 @@ class RawCounts(LoL0):
             LoAPID.ILO_RAW_CNT,
         )
         self.parse_data(packet)
+
+# Add Decompression
