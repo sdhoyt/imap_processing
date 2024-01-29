@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from imap_processing.ccsds.ccsds_data import CcsdsData
-from imap_processing.lo.l0.utils.loApid import LoAPID
 from imap_processing.lo.l0.lol0 import LoL0
+from imap_processing.lo.l0.utils.loApid import LoAPID
 
 
 @dataclass
@@ -84,5 +84,6 @@ class RawCounts(LoL0):
             LoAPID.ILO_RAW_CNT,
         )
         self.parse_data(packet)
+
 
 # Add Decompression

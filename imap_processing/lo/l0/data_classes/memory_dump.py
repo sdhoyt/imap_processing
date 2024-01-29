@@ -1,6 +1,6 @@
 from imap_processing.ccsds.ccsds_data import CcsdsData
-from imap_processing.lo.l0.utils.loApid import LoAPID
 from imap_processing.lo.l0.lol0 import LoL0
+from imap_processing.lo.l0.utils.loApid import LoAPID
 
 
 class MemoryDump(LoL0):

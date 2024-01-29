@@ -45,4 +45,5 @@ class DiagnosticBulkHVPS:
         )
         self.parse_data(packet)
 
+
 # TODO: Add Decompression
