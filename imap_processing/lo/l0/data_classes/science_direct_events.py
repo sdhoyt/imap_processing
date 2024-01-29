@@ -5,9 +5,9 @@ from itertools import compress
 import bitstring
 from bitarray import bitarray
 
-import imap_processing.lo.l0.decompression_tables as decompress_tables
+import imap_processing.lo.l0.data_classes.decompression_tables.decompression_tables as decompress_tables
 from imap_processing.ccsds.ccsds_data import CcsdsData
-from imap_processing.lo.l0.lo_base import LoBase
+from imap_processing.lo.l0.utils.lo_base import LoBase
 
 
 @dataclass

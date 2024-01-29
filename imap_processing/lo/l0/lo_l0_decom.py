@@ -24,8 +24,8 @@ from static_housekeeping import StaticHousekeeping
 
 from imap_processing import decom
 from imap_processing.lo import version
-from imap_processing.lo.l0.lo_l0_container import LoL0Container
-from imap_processing.lo.l0.loApid import LoAPID
+from imap_processing.lo.l0.utils.lo_l0_container import LoL0Container
+from imap_processing.lo.l0.utils.loApid import LoAPID
 
 logging.basicConfig(level=logging.INFO)
 

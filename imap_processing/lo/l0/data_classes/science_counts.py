@@ -6,5 +6,4 @@ class ScienceCounts:
     SHCOARSE: int
 
 
-
-#TODO: Add Decompression
+# TODO: Add Decompression
