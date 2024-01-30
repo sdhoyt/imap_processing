@@ -52,18 +52,6 @@ class ScienceDirectEvents(LoBase):
         for golden triples because it's used to recover TOF1 because
         compression scheme to save space on golden triples doesn't send
         down TOF1 so it's recovered on the ground using the checksum
-    case_number: int
-        The compression case number for the direct event. The case number
-        determines how the bits are arranged in the compressed data.
-    tof_calculation_binary: dict
-        Binary used to determine which TOF coefficients should be used
-        for decompressing the binary.
-    tof_decoder: list
-        Shows how the fields in the binary are split up by bit length and order.
-    remaining_bits: dict
-        The TOF coefficients that should be used for decompression
-    parsed_bits: dict
-        The binary bits split up by TOF field.
 
     Methods
     -------
@@ -84,6 +72,7 @@ class ScienceDirectEvents(LoBase):
     TIME: float
     ENERGY: float
     POS: float
+    CKSM: int
 
     def __init__(self, packet, software_version: str, packet_file_name: str):
         """Intialization method for Science Direct Events Data class."""
