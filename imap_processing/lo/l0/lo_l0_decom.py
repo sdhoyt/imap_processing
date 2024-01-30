@@ -1,9 +1,8 @@
 """IMAP-Lo L0 Decommutation."""
 import logging
 from pathlib import Path
+
 import xarray as xr
-
-
 from science_direct_events import ScienceDirectEvents
 
 from imap_processing import decom
@@ -60,54 +59,43 @@ def decom_lo_packets(packet_file: str, xtce: str):
         else:
             raise Exception(f"lo_l0_decom.py - The APID {apid} is not valid for Lo")
 
-
     sci_de = l0_data.filter_data(LoAPID.ILO_SCI_DE)
     if sci_de:
         sci_de_count = xr.DataArray(
             name="count",
             data=[sci_de_data.COUNT for sci_de_data in sci_de],
-            )
-        sci_de_checksum=xr.DataArray(
-            name="checksum",
-            data=[sci_de_data.CKSM for sci_de_data in sci_de]
-            )
+        )
+        sci_de_checksum = xr.DataArray(
+            name="checksum", data=[sci_de_data.CKSM for sci_de_data in sci_de]
+        )
         sci_de_tof0 = xr.DataArray(
-            name="tof0",
-            data=[sci_de_data.TOF0 for sci_de_data in sci_de]
-            )
+            name="tof0", data=[sci_de_data.TOF0 for sci_de_data in sci_de]
+        )
         sci_de_tof1 = xr.DataArray(
-            name="tof1",
-            data=[sci_de_data.TOF1 for sci_de_data in sci_de]
-            )
+            name="tof1", data=[sci_de_data.TOF1 for sci_de_data in sci_de]
+        )
         sci_de_tof2 = xr.DataArray(
-            name="tof2",
-            data=[sci_de_data.TOF2 for sci_de_data in sci_de]
-            )
+            name="tof2", data=[sci_de_data.TOF2 for sci_de_data in sci_de]
+        )
         sci_de_tof3 = xr.DataArray(
-            name="tof3",
-            data=[sci_de_data.TOF3 for sci_de_data in sci_de]
-            )
+            name="tof3", data=[sci_de_data.TOF3 for sci_de_data in sci_de]
+        )
         sci_de_energy = xr.DataArray(
-            name="energy",
-            data=[sci_de_data.ENERGY for sci_de_data in sci_de]
-            )
+            name="energy", data=[sci_de_data.ENERGY for sci_de_data in sci_de]
+        )
         sci_de_pos = xr.DataArray(
-            name="pos",
-            data=[sci_de_data.POS for sci_de_data in sci_de]
-            )
+            name="pos", data=[sci_de_data.POS for sci_de_data in sci_de]
+        )
 
         sci_de_dataset = xr.Dataset(
             data_vars={
-                "count":sci_de_count,
-                "checksum":sci_de_checksum,
-                "tof0":sci_de_tof0,
-                "tof1":sci_de_tof1,
-                "tof2":sci_de_tof2,
-                "tof3":sci_de_tof3,
-                "energy":sci_de_energy,
-                "pos":sci_de_pos
+                "count": sci_de_count,
+                "checksum": sci_de_checksum,
+                "tof0": sci_de_tof0,
+                "tof1": sci_de_tof1,
+                "tof2": sci_de_tof2,
+                "tof3": sci_de_tof3,
+                "energy": sci_de_energy,
+                "pos": sci_de_pos,
             }
         )
-
-
-
