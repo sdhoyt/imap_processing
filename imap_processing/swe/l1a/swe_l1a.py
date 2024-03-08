@@ -2,7 +2,7 @@
 
 import logging
 
-from imap_processing.cdf.utils import write_cdf
+from imap_processing.swe.l0 import decom_swe
 from imap_processing.swe.l1a.swe_science import swe_science
 from imap_processing.swe.utils.swe_utils import (
     SWEAPID,
@@ -12,7 +12,7 @@ from imap_processing.swe.utils.swe_utils import (
 from imap_processing.utils import group_by_apid, sort_by_time
 
 
-def swe_l1a(packets):
+def swe_l1a(file_path):
     """Process SWE l0 data into l1a data.
 
     Receive all L0 data file. Based on appId, it
@@ -21,16 +21,17 @@ def swe_l1a(packets):
 
     Parameters
     ----------
-    packets: list
-        Decom data list that contains all appIds
+    file_path: pathlib.Path
+        Path where data is downloaded
 
     Returns
     -------
-    pathlib.Path
-        Path to where the CDF file was created.
-        This is used to upload file from local to s3.
-        TODO: test this later.
+    List
+        List of xarray.Dataset
     """
+    packets = decom_swe.decom_packets(file_path)
+
+    processed_data = []
     # group data by appId
     grouped_data = group_by_apid(packets)
 
@@ -50,7 +51,7 @@ def swe_l1a(packets):
 
         # write data to CDF
         mode = f"{data['APP_MODE'].data[0]}-" if apid == SWEAPID.SWE_APP_HK else ""
-        return write_cdf(
-            data,
-            descriptor=f"{mode}{filename_descriptors.get(apid)}",
-        )
+        descriptor = f"{mode}{filename_descriptors.get(apid)}"
+
+        processed_data.append({"data": data, "descriptor": descriptor})
+    return processed_data
