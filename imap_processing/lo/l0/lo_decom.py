@@ -9,6 +9,8 @@ from imap_processing import decom
 from imap_processing.lo import version
 from imap_processing.lo.l0.utils.lo_l0_container import LoL0Container
 from imap_processing.lo.l0.utils.loApid import LoAPID
+import imap_processing.lo.l0.lo_cdf_attrs as lo_cdf_attrs
+from imap_processing.cdf.utils import write_cdf
 
 logging.basicConfig(level=logging.INFO)
 
@@ -61,6 +63,8 @@ def decom_lo_packets(packet_file: str, xtce: str):
 
     sci_de = l0_data.filter_data(LoAPID.ILO_SCI_DE)
     if sci_de:
+        # TODO: Confirm whether count is needed. I don't know that this is
+        # necessary to save
         sci_de_count = xr.DataArray(
             name="count",
             data=[sci_de_data.COUNT for sci_de_data in sci_de],
@@ -86,6 +90,9 @@ def decom_lo_packets(packet_file: str, xtce: str):
         sci_de_pos = xr.DataArray(
             name="pos", data=[sci_de_data.POS for sci_de_data in sci_de]
         )
+        sci_de_time = xr.DataArray(
+            name='time', data=[sci_de_data.TIME for sci_de_data in sci_de]
+        )
 
         sci_de_dataset = xr.Dataset(
             data_vars={
@@ -97,5 +104,12 @@ def decom_lo_packets(packet_file: str, xtce: str):
                 "tof3": sci_de_tof3,
                 "energy": sci_de_energy,
                 "pos": sci_de_pos,
-            }
+                "time": sci_de_time
+            },
+            attrs=lo_cdf_attrs.lo_l1a_global_attrs.output(),
+            #TODO: figure out how to convert time data to epoch
+            coords={"Epoch": sci_de_time}
         )
+
+    write_cdf(sci_de_time, Path())
+
