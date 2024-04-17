@@ -170,3 +170,18 @@ lo_oxygen_rate_attrs = ScienceAttrs(
     units="seconds",
     label_axis="oxygen rate",
 )
+
+### Star Sensor ###
+lo_star_sensor_attrs = ScienceAttrs(
+    validmin=0,
+    validmax=GlobalConstants.INT_FILLVAL,
+    catdesc="Star Sensor FIFO Data",
+    depend_0="epoch",
+    display_type="time_series",  # TODO: Need to ask Lo what this data is showing
+    fill_val=GlobalConstants.INT_FILLVAL,
+    fieldname="Star Sensor FIFO Data",
+    format="I12",
+    var_type="data",
+    units="seconds",  # TODO: Need to ask Lo about units
+    label_axis="star sensor FIFO data",
+)

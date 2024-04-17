@@ -29,11 +29,18 @@ def write_lo_l1a_cdfs(data: LoContainer):
         cdf_file = write_cdf(scide_dataset)
         created_filepaths.append(cdf_file)
 
-    science_counts = data.filter_apid(LoAPID.ILO_SCI_CNT.value)
     # Write Science Counts CDF if available
+    science_counts = data.filter_apid(LoAPID.ILO_SCI_CNT.value)
     if science_counts:
         science_counts_dataset = create_lo_scicnt_dataset(science_counts)
         cdf_file = write_cdf(science_counts_dataset)
+        created_filepaths.append(cdf_file)
+
+    # Write Star Sensor CDF if available
+    star_sensor = data.filter_apid(LoAPID.ILO_STAR.value)
+    if star_sensor:
+        star_dataset = create_lo_star_dataset(star_sensor)
+        cdf_file = write_cdf(star_dataset)
         created_filepaths.append(cdf_file)
 
     return created_filepaths
@@ -45,7 +52,7 @@ def create_lo_scide_dataset(sci_de: list):
 
     Parameters
     ----------
-    scide: list
+    sci_de: list
         List of ScienceDirectEvent data class objects.
 
     Returns
@@ -134,7 +141,7 @@ def create_lo_scicnt_dataset(sci_cnt: list):
 
     Parameters
     ----------
-    scide: list
+    sci_cnt: list
         List of ScienceCounts data class objects.
 
     Returns
@@ -281,3 +288,47 @@ def create_lo_scicnt_dataset(sci_cnt: list):
     )
 
     return sci_cnt_dataset
+
+
+def create_lo_star_dataset(star: list):
+    """
+    Create Lo L1A Star Sensor Dataset from the StarSensor dataclasses.
+
+    Parameters
+    ----------
+    scide: list
+        List of StarSensor data class objects.
+
+    Returns
+    -------
+    xarray.Dataset
+        Lo L1A Star Sensor Dataset.
+    """
+    # TODO: How should the times be computed? Repeat SHCOARSE for samples from the
+    # same packet?
+    # TODO: Need to convert times epoch times to nanoseconds?
+    star_sensor_epoch = xr.DataArray(
+        np.array(
+            [np.full(star_data.COUNT, star_data.SHCOARSE) for star_data in star],
+            dtype="datetime64[s]",
+        ),
+        dims=["epoch"],
+        name="epoch",
+        attrs=ConstantCoordinates.EPOCH,
+    )
+
+    # create the dataset without populating data
+    star_sensor_dataset = xr.Dataset(
+        data_vars={},
+        attrs=lo_cdf_attrs.lo_sci_cnt_l1a_attrs.output(),
+        # TODO: figure out how to convert time data to epoch
+        coords={"epoch": star_sensor_epoch},
+    )
+
+    # populate the dataset fields
+    # TODO: What should this field be called?
+    star_sensor_dataset["star_sensor"] = xr.DataArray(
+        np.concatenate([star_data.DATA for star_data in star]),
+        dims="epoch",
+        attrs=lo_cdf_attrs.lo_star_sensor_attrs.output(),
+    )
