@@ -1,8 +1,8 @@
 """IMAP-HI L1A processing module."""
 
 import logging
-from pathlib import Path
-from typing import Union
+
+import xarray as xr
 
 from imap_processing.hi.l0 import decom_hi
 from imap_processing.hi.l1a.histogram import create_dataset as hist_create_dataset
@@ -14,7 +14,7 @@ from imap_processing.utils import group_by_apid
 logger = logging.getLogger(__name__)
 
 
-def hi_l1a(packet_file_path: Union[str, Path], data_version: str):
+def hi_l1a(packet_file_path: str, data_version: str) -> list[xr.Dataset]:
     """
     Will process IMAP raw data to l1a.
 
@@ -27,7 +27,7 @@ def hi_l1a(packet_file_path: Union[str, Path], data_version: str):
 
     Returns
     -------
-    processed_data : list
+    processed_data : list[xarray.Dataset]
         List of processed xarray dataset.
     """
     unpacked_data = decom_hi.decom_packets(packet_file_path)

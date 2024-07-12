@@ -1,12 +1,14 @@
 """Calculate ULTRA L1b."""
 
+import xarray as xr
+
 from imap_processing.ultra.l1b.badtimes import calculate_badtimes
 from imap_processing.ultra.l1b.cullingmask import calculate_cullingmask
 from imap_processing.ultra.l1b.de import calculate_de
 from imap_processing.ultra.l1b.extendedspin import calculate_extendedspin
 
 
-def ultra_l1b(data_dict: dict, data_version: str):
+def ultra_l1b(data_dict: dict, data_version: str) -> list[xr.Dataset]:
     """
     Will process ULTRA L1A data into L1B CDF files at output_filepath.
 
@@ -19,7 +21,7 @@ def ultra_l1b(data_dict: dict, data_version: str):
 
     Returns
     -------
-    output_datasets : list of xarray.Dataset
+    output_datasets : list[xarray.Dataset]
         List of xarray.Dataset.
     """
     output_datasets = []
