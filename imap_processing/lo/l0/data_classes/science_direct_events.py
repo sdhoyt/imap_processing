@@ -110,7 +110,9 @@ class ScienceDirectEvents(LoBase):
     """
 
     SHCOARSE: int
+    COUNT: int
     DE_COUNT: int
+    PASSES: int
     DATA: str
     DE_TIME: np.ndarray
     ESA_STEP: np.ndarray
@@ -141,15 +143,16 @@ class ScienceDirectEvents(LoBase):
         # cases, so these can be initialized to the
         # CDF fill val and stored with this value for
         # those cases.
-        self.DE_TIME = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.ESA_STEP = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.MODE = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.TOF0 = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.TOF1 = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.TOF2 = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.TOF3 = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.CKSM = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
-        self.POS = np.ones(self.DE_COUNT) * GlobalConstants.DOUBLE_FILLVAL
+        self.DE_COUNT = self.COUNT
+        self.DE_TIME = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.ESA_STEP = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.MODE = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.TOF0 = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.TOF1 = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.TOF2 = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.TOF3 = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.CKSM = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
+        self.POS = np.ones(self.DE_COUNT) * GlobalConstants.INT_FILLVAL
         self._decompress_data()
 
     def _decompress_data(self):
@@ -160,13 +163,14 @@ class ScienceDirectEvents(LoBase):
         attributes are set.
         """
         data = BinaryString(self.DATA)
+        print(f"DE_COUNT: {self.DE_COUNT}")
+        print(f"DATA: {data}")
         for de_idx in range(self.DE_COUNT):
             # The first 4 bits of the binary data are used to
             # determine which case number we are working with.
             # The case number is used to determine how to
             # decompress the TOF values.
             case_number = int(data.next_bits(4), 2)
-
             # time, ESA_STEP, and mode are always transmitted.
             self.DE_TIME[de_idx] = int(data.next_bits(DATA_BITS.DE_TIME), 2)
             self.ESA_STEP[de_idx] = int(data.next_bits(DATA_BITS.ESA_STEP), 2)
@@ -174,6 +178,7 @@ class ScienceDirectEvents(LoBase):
 
             # Case decoder indicates which parts of the data
             # are transmitted for each case.
+
             case_decoder = CASE_DECODER[(case_number, self.MODE[de_idx])]
 
             # Check the case decoder to see if the TOF field was
@@ -206,3 +211,16 @@ class ScienceDirectEvents(LoBase):
             if case_decoder.POS:
                 # no bit shift for POS
                 self.POS[de_idx] = int(data.next_bits(DATA_BITS.POS), 2)
+
+            print(
+                f"SHCOURSE: {self.SHCOARSE} "
+                f"DE_TIME: {self.DE_TIME[de_idx]} "
+                f"CASENUMBER: {case_number} "
+                f"MODE: {self.MODE[de_idx]}"
+                f"ESA_STEP: {self.ESA_STEP[de_idx]} "
+                f"TOF0: {self.TOF0[de_idx]} "
+                f"TOF1: {self.TOF1[de_idx]} "
+                f"TOF2: {self.TOF2[de_idx]} "
+                f"TOF3: {self.TOF3[de_idx]} "
+                f"CKSM: {self.CKSM[de_idx]} "
+                f"POS: {self.POS[de_idx]}")

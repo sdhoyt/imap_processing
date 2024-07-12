@@ -38,25 +38,25 @@ def main():
     # of fields in the packet caused the XTCE file to exceed the repo
     # file size limit. Because of this modification, the binary field
     # will need to be parsed in the python code.
-    path_to_excel_file = f"{current_directory}/telem_def_lo_modified.xls"
+    path_to_excel_file = f"{current_directory}/TLM_ILO_FM1_27850.01-CT-TLMDEF-2_modified.xlsx"
 
     # Lo packets
     packets = {
-        "P_ILO_APP_NHK": 677,
-        "P_ILO_APP_SHK": 676,
-        "P_ILO_AUTO": 672,
-        "P_ILO_BOOT_HK": 673,
-        "P_ILO_BOOT_MEMDMP": 674,
-        "P_ILO_DIAG_BULK_HVPS": 724,
-        "P_ILO_DIAG_CDH": 721,
-        "P_ILO_DIAG_IFB": 722,
-        "P_ILO_DIAG_PCC": 725,
-        "P_ILO_DIAG_TOF_BD": 723,
-        "P_ILO_EVTMSG": 678,
-        "P_ILO_MEMDMP": 679,
-        "P_ILO_RAW_CNT": 689,
-        "P_ILO_RAW_DE": 690,
-        "P_ILO_RAW_STAR": 691,
+        #"P_ILO_APP_NHK": 677,
+        #"P_ILO_APP_SHK": 676,
+        #"P_ILO_AUTO": 672,
+        #"P_ILO_BOOT_HK": 673,
+        #"P_ILO_BOOT_MEMDMP": 674,
+        #"P_ILO_DIAG_BULK_HVPS": 724,
+        #"P_ILO_DIAG_CDH": 721,
+        #"P_ILO_DIAG_IFB": 722,
+        #"P_ILO_DIAG_PCC": 725,
+        #"P_ILO_DIAG_TOF_BD": 723,
+        #"P_ILO_EVTMSG": 678,
+        #"P_ILO_MEMDMP": 679,
+        #"P_ILO_RAW_CNT": 689,
+        #"P_ILO_RAW_DE": 690,
+        #"P_ILO_RAW_STAR": 691,
         "P_ILO_SCI_CNT": 705,
         "P_ILO_SCI_DE": 706,
         "P_ILO_SPIN": 708,

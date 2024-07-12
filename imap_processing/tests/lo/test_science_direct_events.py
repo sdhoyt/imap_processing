@@ -2,12 +2,13 @@ from collections import namedtuple
 
 import numpy as np
 import pytest
-
+from pathlib import Path
 from imap_processing.cdf.defaults import GlobalConstants
 from imap_processing.lo.l0.data_classes.science_direct_events import (
     ScienceDirectEvents,
 )
-
+from imap_processing.lo.l0.lo_apid import LoAPID
+from imap_processing import decom, imap_module_directory
 
 @pytest.fixture()
 def fake_packet_data():
@@ -25,12 +26,21 @@ def fake_packet_data():
         },
         {
             "SHCOARSE": fake_data_field(0, 0),
-            "DE_COUNT": fake_data_field(0, 0),
+            "COUNT": fake_data_field(0, 0),
             "DATA": fake_data_field("00", "00"),
             "CHKSUM": fake_data_field(0, 0),
         },
     )
 
+@pytest.fixture()
+def sample_packet_data():
+    test_file = imap_module_directory / "tests/lo/sample_data/Instrument_Emulator_ILO_Emulator_v3.4_shutdown_20240627T212019.CCSDS"
+    xtce_file = imap_module_directory / "lo/packet_definitions/P_ILO_SCI_DE.xml"
+
+    packets = decom.decom_packets(test_file.resolve(), xtce_file.resolve())
+    de_packets = list(filter(lambda x : x.header["PKT_APID"].derived_value == LoAPID.ILO_SCI_DE, packets))
+
+    return de_packets
 
 @pytest.fixture()
 def single_de(fake_packet_data):
@@ -74,7 +84,7 @@ def test_parse_data_case_0(single_de):
     # TOF1 not transmitted
     tof2 = "000000010"  # 2
     tof3 = "000011"  # 3
-    cksm = "000"  # 0
+    cksm = "0000"  # 0
     # POS not transmitted
     single_de.DATA = absent + time + energy + mode + tof0 + tof2 + tof3 + cksm
 
@@ -154,7 +164,7 @@ def test_decompress_data_multi_de(multi_de):
     # TOF1 not transmitted
     tof2_1 = "000000010"  # 2
     tof3_1 = "000011"  # 3
-    cksm_1 = "000"  # 0
+    cksm_1 = "0000"  # 0
     # POS not transmitted
 
     # DE Two
@@ -208,3 +218,10 @@ def test_decompress_data_multi_de(multi_de):
     np.testing.assert_array_equal(multi_de.TOF3, expected_tof3)
     np.testing.assert_array_equal(multi_de.CKSM, expected_cksm)
     np.testing.assert_array_equal(multi_de.POS, expected_pos)
+
+def test_validation_data(sample_packet_data):
+    count = 0
+    for packet in sample_packet_data:
+        de = ScienceDirectEvents(packet, "000", "packet_name")
+
+

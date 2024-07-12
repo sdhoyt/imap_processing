@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='utf-8'?>
 <xtce:SpaceSystem xmlns:xtce="http://www.omg.org/space/xtce" name="P_ILO_SCI_DE">
-	<xtce:Header date="2023-11" version="1.0" author="IMAP SDC" />
+	<xtce:Header date="2024-07" version="1.0" author="IMAP SDC" />
 	<xtce:TelemetryMetaData>
 		<xtce:ParameterTypeSet>
 			<xtce:IntegerParameterType name="UINT1" signed="false">
@@ -30,7 +30,7 @@
 					<xtce:SizeInBits>
 						<xtce:DynamicValue>
 							<xtce:ParameterInstanceRef parameterRef="PKT_LEN"/>
-              				<xtce:LinearAdjustment intercept="-112" slope="8"/>
+              				<xtce:LinearAdjustment intercept="-88" slope="8"/>
 						</xtce:DynamicValue>
 					</xtce:SizeInBits>
 				</xtce:BinaryDataEncoding>
@@ -58,20 +58,19 @@
 			<xtce:Parameter name="PKT_LEN" parameterTypeRef="UINT16">
 				<xtce:LongDescription>CCSDS Packet Length (number of bytes after Packet length minus 1)</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="SHCOARSE" parameterTypeRef="UINT32">
-				<xtce:ShortDescription>CCSDS Secondary Header MET</xtce:ShortDescription>
+			<xtce:Parameter name="SHCOARSE" parameterTypeRef="UINT32" shortDescription="CCSDS Secondary Header MET">
 				<xtce:LongDescription>CCSDS Secondary Header MET</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="COUNT" parameterTypeRef="UINT16">
-				<xtce:ShortDescription>Number of direct events</xtce:ShortDescription>
+			<xtce:Parameter name="COUNT" parameterTypeRef="UINT16" shortDescription="Number of direct events">
 				<xtce:LongDescription>Number of direct events</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="DATA" parameterTypeRef="BYTE85680">
-				<xtce:ShortDescription>TOF Direct Event Time Tagged data</xtce:ShortDescription>
+			<xtce:Parameter name="PASSES" parameterTypeRef="UINT32" shortDescription="Passes through the raw data">
+				<xtce:LongDescription>Passes through the raw data</xtce:LongDescription>
+			</xtce:Parameter>
+			<xtce:Parameter name="DATA" parameterTypeRef="BYTE85680" shortDescription="TOF Direct Event Time Tagged data">
 				<xtce:LongDescription>See table 7 of Section 4.2.1 for sizing and see Table 8 and table 9 in section 4.2.1.2 (PHA Event Compression and Packing by ICE) of IMAP-Lo Data Flow document</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="CHKSUM" parameterTypeRef="UINT16">
-				<xtce:ShortDescription>16-bit CRC checksum</xtce:ShortDescription>
+			<xtce:Parameter name="CHKSUM" parameterTypeRef="UINT16" shortDescription="16-bit CRC checksum">
 				<xtce:LongDescription>16-bit CRC checksum</xtce:LongDescription>
 			</xtce:Parameter>
 		</xtce:ParameterSet>
@@ -88,7 +87,7 @@
 				</xtce:EntryList>
 			</xtce:SequenceContainer>
 			<xtce:SequenceContainer name="P_ILO_SCI_DE">
-				<xtce:BaseContainer containerRef="CCSDSPacket">
+				<xtce:BaseContainer containerRef="CCSDSPacket" abstract="true">
 					<xtce:RestrictionCriteria>
 						<xtce:Comparison parameterRef="PKT_APID" value="706" useCalibratedValue="false" />
 					</xtce:RestrictionCriteria>
@@ -96,6 +95,7 @@
 				<xtce:EntryList>
 					<xtce:ParameterRefEntry parameterRef="SHCOARSE" />
 					<xtce:ParameterRefEntry parameterRef="COUNT" />
+					<xtce:ParameterRefEntry parameterRef="PASSES" />
 					<xtce:ParameterRefEntry parameterRef="DATA" />
 					<xtce:ParameterRefEntry parameterRef="CHKSUM" />
 				</xtce:EntryList>
