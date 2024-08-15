@@ -353,28 +353,33 @@ def packet_file_to_datasets(
     packet_parser = parser.PacketParser(packet_definition)
 
     with open(packet_file, "rb") as binary_data:
+        count = 0
         packet_generator = packet_parser.generator(binary_data)
         for packet in packet_generator:
-            apid = packet.header["PKT_APID"].raw_value
-            if apid not in data_dict:
-                # This is the first packet for this APID
-                data_dict[apid] = collections.defaultdict(list)
-                datatype_mapping[apid] = dict()
+            if 14 < count <= 54:
+                apid = packet.header["PKT_APID"].raw_value
+                if apid not in data_dict:
+                    # This is the first packet for this APID
+                    data_dict[apid] = collections.defaultdict(list)
+                    datatype_mapping[apid] = dict()
 
-            # TODO: Do we want to give an option to remove the header content?
-            packet_content = packet.data | packet.header
+                # TODO: Do we want to give an option to remove the header content?
+                packet_content = packet.data | packet.header
 
-            for key, value in packet_content.items():
-                val = value.raw_value
-                if use_derived_value:
-                    # Use the derived value if it exists, otherwise use the raw value
-                    val = value.derived_value or val
-                data_dict[apid][key].append(val)
-                if key not in datatype_mapping[apid]:
-                    # Add this datatype to the mapping
-                    datatype_mapping[apid][key] = _get_minimum_numpy_datatype(
-                        key, packet_definition
-                    )
+                for key, value in packet_content.items():
+                    val = value.raw_value
+                    if use_derived_value:
+                        # Use derived value if it exists, otherwise use the raw value
+                        val = value.derived_value or val
+                    data_dict[apid][key].append(val)
+                    if key not in datatype_mapping[apid]:
+                        # Add this datatype to the mapping
+                        datatype_mapping[apid][key] = _get_minimum_numpy_datatype(
+                            key, packet_definition
+                        )
+            count += 1
+            if count > 54:
+                break
 
     dataset_by_apid = {}
 
