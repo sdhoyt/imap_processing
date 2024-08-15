@@ -7,6 +7,22 @@ import xarray as xr
 from imap_processing import imap_module_directory
 from imap_processing.utils import packet_file_to_datasets
 
+
+def parse_header(count_rates: str) -> None:
+    """
+    Parse science frame header fields.
+
+    Parameters
+    ----------
+    count_rates : str
+        Science frame binary for the first 6 packets.
+    """
+    # TODO need to figure out how this function should
+    # return the header data
+    # append(int(count_rates[0:2], 2))
+    pass
+
+
 # NOTES:
 # use_derived_value boolean flag (default True) whether to use
 # the derived value from the XTCE definition.
@@ -45,7 +61,8 @@ print(datasets_by_apid)
 sci_dataset = datasets_by_apid[1252]
 
 # Initialize a list to store valid science frames
-valid_science_frames = []
+count_rates_bin = []
+pha_bin = []
 # Iterate over the dataset in chunks of 20
 for i in range(0, len(sci_dataset.epoch), 20):
     # Check if the slice length is exactly 20
@@ -65,17 +82,28 @@ for i in range(0, len(sci_dataset.epoch), 20):
             and seq_flgs_chunk[19] == 2
         ):
             # If the chunk is valid, append the science data to the list
-            valid_science_frames.append("".join(science_data_chunk.data))
-            # TODO: Split out the PHAs from science data
+            count_rates_bin.append("".join(science_data_chunk.data[0:6]))
+            pha_bin.append("".join(science_data_chunk.data[6:]))
         else:
             # If the sequence doesn't match, you can either skip it or
             # raise a warning/error
             print(f"Invalid sequence found at index {i}")
 
 # Convert the list to an xarray DataArray
-grouped_data = xr.DataArray(valid_science_frames, dims=["group"], name="science_frames")
+count_rates_bin_data = xr.DataArray(
+    count_rates_bin, dims=["group"], name="count_rates_bin"
+)
+pha_bin_data = xr.DataArray(pha_bin, dims=["group"], name="count_rates_bin")
 
 # Now add this as a new data variable to the dataset
-sci_dataset["science_frames"] = grouped_data
+sci_dataset["count_rates_bin"] = count_rates_bin_data
+sci_dataset["pha_bin"] = pha_bin_data
+
+sci_dataset["hdr_unit_num"] = xr.DataArray([], name="hdr_unit_num")
+
+count_rates_ints: list[int] = []
+for count_rates in sci_dataset["count_rates_bin"].data:
+    parse_header(count_rates)
+    # parse rates, maybe break up into separate functions
 
 print(sci_dataset)
