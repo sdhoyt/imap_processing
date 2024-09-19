@@ -16,19 +16,19 @@ de_default_attrs: &de_default
   VAR_TYPE: support_data
   DEPEND_1: direct_events
 
-hist_default_attrs: &hist_default
+hist_az_60_default: &hist_az_60_default
   <<: *default
   VAR_TYPE: data
   DEPEND_0: epoch
+  DEPEND_1: azimuth_60
   DEPEND_2: esa_step
 
-hist_az_60_default: &hist_az_60_default
-  <<: *hist_default
-  DEPEND_1: azimuth_60
-
 hist_az_6_default: &hist_az_6_default
-  <<: *hist_default
+  <<: *default
+  VAR_TYPE: data
+  DEPEND_0: epoch
   DEPEND_1: azimuth_6
+  DEPEND_2: esa_step
 
 spin_default_attrs: &spin_default
   <<: *default
