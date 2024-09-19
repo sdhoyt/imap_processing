@@ -30,7 +30,7 @@ hist_az_6_default: &hist_az_6_default
   <<: *hist_default
   DEPEND_1: azimuth_6
 
-spin_default_attrs: &star_default
+spin_default_attrs: &spin_default
   <<: *default
   VAR_TYPE: support_data
   DEPEND_1: spin
