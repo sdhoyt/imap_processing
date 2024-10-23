@@ -65,15 +65,46 @@ def lo_l1a(dependency: Path, data_version: str) -> list[xr.Dataset]:
             datasets_by_apid[LoAPID.ILO_SCI_CNT], attr_mgr, logical_source
         )
     if LoAPID.ILO_SCI_DE in datasets_by_apid:
-        logical_source = "imap_lo_l1a_de"
-        datasets_by_apid[LoAPID.ILO_SCI_DE] = combine_segmented_packets(
-            datasets_by_apid[LoAPID.ILO_SCI_DE]
-        )
-        datasets_by_apid[LoAPID.ILO_SCI_DE] = parse_events(
-            datasets_by_apid[LoAPID.ILO_SCI_DE], attr_mgr
-        )
+        import csv
+        with open("de_bin.csv", "w", newline='') as f:
+            ds = datasets_by_apid[LoAPID.ILO_SCI_DE]
+            writer = csv.writer(f)
+            logical_source = "imap_lo_l1a_de"
+            writer.writerow([
+                "shcoarse",
+                "pkt_apid",
+                "seq_flgs",
+                "src_seq_ctr",
+                "pkt_len",
+                "data",
+            ])
 
-    good_apids = [LoAPID.ILO_SCI_CNT]
+            for i in range(len(ds["shcoarse"])):
+                writer.writerow([
+                    ds["shcoarse"].values[i],
+                    ds["pkt_apid"].values[i],
+                    ds["seq_flgs"].values[i],
+                    ds["src_seq_ctr"].values[i],
+                    ds["pkt_len"].values[i],
+                    ds["data"].values[i],
+                ])
+            datasets_by_apid[LoAPID.ILO_SCI_DE] = combine_segmented_packets(
+                datasets_by_apid[LoAPID.ILO_SCI_DE]
+            )
+            ds = datasets_by_apid[LoAPID.ILO_SCI_DE]
+            writer.writerow([
+                "NA",
+                "NA",
+                "NA",
+                "NA",
+                "NA",
+                ds["events"].values[0],
+            ])
+            datasets_by_apid[LoAPID.ILO_SCI_DE] = parse_events(
+                datasets_by_apid[LoAPID.ILO_SCI_DE], attr_mgr
+            )
+
+    good_apids = [LoAPID.ILO_SCI_CNT, LoAPID.ILO_SCI_DE]
     logger.info(f"\nReturning datasets: {[LoAPID(apid) for apid in good_apids]}")
     return [datasets_by_apid[good_apid] for good_apid in good_apids]
 
@@ -152,6 +183,23 @@ def add_dataset_attrs(
         )
         dataset.attrs.update(attr_mgr.get_global_attributes(logical_source))
         # remove the binary field and CCSDS header from the dataset
+        dataset = dataset.drop_vars(
+            [
+                "sci_cnt",
+                "chksum",
+                "version",
+                "type",
+                "sec_hdr_flg",
+                "pkt_apid",
+                "seq_flgs",
+                "src_seq_ctr",
+                "pkt_len",
+            ]
+        )
+    elif logical_source == "imap_lo_l1a_de":
+        #dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
+        #dataset.epoch.attrs.update(attr_mgr.get_variable_attributes("epoch"))
+        dataset.attrs.update(attr_mgr.get_global_attributes(logical_source))
         dataset = dataset.drop_vars(
             [
                 "sci_cnt",

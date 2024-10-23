@@ -14,6 +14,10 @@ from imap_processing.lo.l0.lo_science import (
 
 @pytest.fixture()
 def fake_de_dataset():
+
+    #binary packet fields
+    count = "0000000000000010" # 2
+    passes = "00000000000000000000000000000001" # 1
     # DE One
     absent_1 = "0000"  # case 0
     time_1 = "000001100100"  # 100
@@ -37,7 +41,9 @@ def fake_de_dataset():
     pos_2 = "00"  # 0
 
     de_data = (
-        absent_1
+        count
+        + passes
+        + absent_1
         + time_1
         + energy_1
         + mode_1
@@ -55,7 +61,7 @@ def fake_de_dataset():
     dataset = xr.Dataset(
         data_vars=dict(
             count=(["time"], np.array([2])),
-            data=(["time"], np.array([de_data])),
+            events=(["time"], np.array([de_data])),
         )
     )
 
@@ -142,6 +148,9 @@ def test_parse_events(fake_de_dataset, attr_mgr):
 
 
 def test_parse_fixed_fields(initialized_dataset):
+    # Arrange
+    initialized_dataset.attrs["bit_pos"] = 48
+
     # Act
     dataset = parse_fixed_fields(initialized_dataset, 0, 0)
 
@@ -158,7 +167,7 @@ def test_parse_variable_fields(initialized_dataset):
     # Arrange
     initialized_dataset["coincidence_type"].values = np.array([0, 255])
     initialized_dataset["mode"].values = np.array([1, 255])
-    initialized_dataset.attrs["bit_pos"] = 20
+    initialized_dataset.attrs["bit_pos"] = 68
 
     # Act
     dataset = parse_variable_fields(initialized_dataset, 0, 0)

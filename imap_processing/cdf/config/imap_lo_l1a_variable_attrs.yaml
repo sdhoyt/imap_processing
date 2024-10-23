@@ -209,6 +209,15 @@ de_count:
   CATDESC: Direct Event Counts
   FIELDNAM: Direct Event Count
   LABLAXIS: Direct Event Count
+
+passes:
+  <<: *default
+  <<: *default_uint16
+  VALIDMAX: 32767
+  DEPEND_0: epoch
+  CATDESC: Passes through raw data
+  FIELDNAM: Direct Event Passes
+  LABLAXIS: Direct Event Passes
 # Direct Events Attributes - END
 
 # Histogram Attributes
