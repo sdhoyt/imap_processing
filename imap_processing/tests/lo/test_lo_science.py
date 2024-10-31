@@ -14,10 +14,9 @@ from imap_processing.lo.l0.lo_science import (
 
 @pytest.fixture()
 def fake_de_dataset():
-
-    #binary packet fields
-    count = "0000000000000010" # 2
-    passes = "00000000000000000000000000000001" # 1
+    # binary packet fields
+    count = "0000000000000010"  # 2
+    passes = "00000000000000000000000000000001"  # 1
     # DE One
     absent_1 = "0000"  # case 0
     time_1 = "000001100100"  # 100
