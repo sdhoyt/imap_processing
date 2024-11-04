@@ -198,6 +198,7 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
                 "POS",
             ]
         )
+
         # Sum each count to get the total number of direct events for the pointing
         # parse the count and passes fields. These fields only occur once
         # at the beginning of each packet group and are not part of the
@@ -438,6 +439,7 @@ def combine_segmented_packets(dataset: xr.Dataset) -> xr.Dataset:
     # Mark the end of a segment with a comma.
     # This will be used to determine which bits
     # are padding and not real data.
+
     dataset["events"] = [
         ",".join(dataset["data"].values[start : end + 1])
         for start, end in zip(seg_starts, seg_ends)

@@ -14,7 +14,7 @@ from imap_processing.lo.l0.lo_science import (
     parse_events,
     parse_histogram,
 )
-from imap_processing.utils import packet_file_to_datasets
+from imap_processing.utils import convert_to_binary_string, packet_file_to_datasets
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -65,41 +65,56 @@ def lo_l1a(dependency: Path, data_version: str) -> list[xr.Dataset]:
             datasets_by_apid[LoAPID.ILO_SCI_CNT], attr_mgr, logical_source
         )
     if LoAPID.ILO_SCI_DE in datasets_by_apid:
+        datasets_by_apid[LoAPID.ILO_SCI_DE]["data"] = xr.DataArray(
+            [
+                convert_to_binary_string(data)
+                for data in datasets_by_apid[LoAPID.ILO_SCI_DE]["data"].values
+            ],
+            dims=datasets_by_apid[LoAPID.ILO_SCI_DE]["data"].dims,
+            attrs=datasets_by_apid[LoAPID.ILO_SCI_DE]["data"].attrs,
+        )
         import csv
-        with open("de_bin.csv", "w", newline='') as f:
+
+        with open("de_bin.csv", "w", newline="") as f:
             ds = datasets_by_apid[LoAPID.ILO_SCI_DE]
             writer = csv.writer(f)
             logical_source = "imap_lo_l1a_de"
-            writer.writerow([
-                "shcoarse",
-                "pkt_apid",
-                "seq_flgs",
-                "src_seq_ctr",
-                "pkt_len",
-                "data",
-            ])
+            writer.writerow(
+                [
+                    "shcoarse",
+                    "pkt_apid",
+                    "seq_flgs",
+                    "src_seq_ctr",
+                    "pkt_len",
+                    "data",
+                ]
+            )
 
             for i in range(len(ds["shcoarse"])):
-                writer.writerow([
-                    ds["shcoarse"].values[i],
-                    ds["pkt_apid"].values[i],
-                    ds["seq_flgs"].values[i],
-                    ds["src_seq_ctr"].values[i],
-                    ds["pkt_len"].values[i],
-                    ds["data"].values[i],
-                ])
+                writer.writerow(
+                    [
+                        ds["shcoarse"].values[i],
+                        ds["pkt_apid"].values[i],
+                        ds["seq_flgs"].values[i],
+                        ds["src_seq_ctr"].values[i],
+                        ds["pkt_len"].values[i],
+                        ds["data"].values[i],
+                    ]
+                )
             datasets_by_apid[LoAPID.ILO_SCI_DE] = combine_segmented_packets(
                 datasets_by_apid[LoAPID.ILO_SCI_DE]
             )
             ds = datasets_by_apid[LoAPID.ILO_SCI_DE]
-            writer.writerow([
-                "NA",
-                "NA",
-                "NA",
-                "NA",
-                "NA",
-                ds["events"].values[0],
-            ])
+            writer.writerow(
+                [
+                    "NA",
+                    "NA",
+                    "NA",
+                    "NA",
+                    "NA",
+                    ds["events"].values[0],
+                ]
+            )
             datasets_by_apid[LoAPID.ILO_SCI_DE] = parse_events(
                 datasets_by_apid[LoAPID.ILO_SCI_DE], attr_mgr
             )
@@ -197,8 +212,8 @@ def add_dataset_attrs(
             ]
         )
     elif logical_source == "imap_lo_l1a_de":
-        #dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
-        #dataset.epoch.attrs.update(attr_mgr.get_variable_attributes("epoch"))
+        # dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
+        # dataset.epoch.attrs.update(attr_mgr.get_variable_attributes("epoch"))
         dataset.attrs.update(attr_mgr.get_global_attributes(logical_source))
         dataset = dataset.drop_vars(
             [
