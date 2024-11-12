@@ -343,19 +343,14 @@ def parse_variable_fields(
                 dataset, pkt_idx, bit_length, DE_BIT_SHIFT[field]
             )
             dataset.attrs["bit_pos"] += bit_length
-
-    end_of_seg = str(dataset["events"].values[pkt_idx]).find(
-        ",", dataset.attrs["bit_pos"]
-    )
-    if end_of_seg - dataset.attrs["bit_pos"] < 8:
-        print("found end of seg", end_of_seg)
-        dataset.attrs["bit_pos"] = end_of_seg + 1
-        if dataset.attrs["bit_pos"] == 32657:
-            dataset.attrs["bit_pos"] = dataset.attrs["bit_pos"] + 36
-        print("new bit pos", dataset.attrs["bit_pos"])
+    dataset = check_for_padding(dataset)
 
     return dataset
 
+def check_for_padding(dataset: xr.Dataset):
+    if dataset.attrs["bit_pos"] == 32654:
+        dataset.attrs["bit_pos"] = dataset.attrs["bit_pos"] + 38
+    return dataset
 
 def parse_de_bin(
     dataset: xr.Dataset, pkt_idx: int, bit_length: int, bit_shift: int = 0
@@ -441,9 +436,15 @@ def combine_segmented_packets(dataset: xr.Dataset) -> xr.Dataset:
     # are padding and not real data.
 
     dataset["events"] = [
-        ",".join(dataset["data"].values[start : end + 1])
+        "".join(dataset["data"].values[start : end + 1])
         for start, end in zip(seg_starts, seg_ends)
     ]
+
+    # TEMP DEBUG CODE
+#     dataset["events"] = [
+#     event[:32650] + event[32650 + 40 :] for event in dataset["events"].values
+# ]
+
     print("valid groups", valid_groups)
     # drop any group of segmented packets that aren't sequential
     dataset["events"] = dataset["events"].values[valid_groups]
