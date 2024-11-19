@@ -99,7 +99,6 @@ def lo_l1a(dependency: Path, data_version: str) -> list[xr.Dataset]:
                         ds["seq_flgs"].values[i],
                         ds["src_seq_ctr"].values[i],
                         ds["pkt_len"].values[i],
-                        ds["chksum"].values[i],
                         ds["data"].values[i],
                     ]
                 )

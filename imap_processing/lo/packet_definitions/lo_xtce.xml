@@ -48,14 +48,11 @@
 					<xtce:SizeInBits>
 						<xtce:DynamicValue>
 							<xtce:ParameterInstanceRef parameterRef="PKT_LEN" />
-							<xtce:LinearAdjustment slope="8" intercept="-40" />
+							<xtce:LinearAdjustment slope="8" intercept="-24" />
 						</xtce:DynamicValue>
 					</xtce:SizeInBits>
 				</xtce:BinaryDataEncoding>
 			</xtce:BinaryParameterType>
-			<xtce:IntegerParameterType name="ILO_SCI_DE.CHKSUM" signed="false">
-				<xtce:IntegerDataEncoding sizeInBits="16" encoding="unsigned" />
-			</xtce:IntegerParameterType>
 			<xtce:IntegerParameterType name="ILO_STAR.SHCOARSE" signed="false">
 				<xtce:IntegerDataEncoding sizeInBits="32" encoding="unsigned" />
 			</xtce:IntegerParameterType>
@@ -142,9 +139,6 @@
 			<xtce:Parameter name="ILO_SCI_DE.DATA" parameterTypeRef="ILO_SCI_DE.DATA" shortDescription="TOF Direct Event Time Tagged data">
 				<xtce:LongDescription>See table 7 of Section 4.2.1 for sizing and see Table 8 and table 9 in section 4.2.1.2 (PHA Event Compression and Packing by ICE) of IMAP-Lo Data Flow document</xtce:LongDescription>
 			</xtce:Parameter>
-			<xtce:Parameter name="ILO_SCI_DE.CHKSUM" parameterTypeRef="ILO_SCI_DE.CHKSUM" shortDescription="16-bit CRC checksum">
-				<xtce:LongDescription>16-bit CRC checksum</xtce:LongDescription>
-			</xtce:Parameter>
 			<xtce:Parameter name="ILO_STAR.SHCOARSE" parameterTypeRef="ILO_STAR.SHCOARSE" shortDescription="CCSDS Secondary Header MET">
 				<xtce:LongDescription>CCSDS Secondary Header MET</xtce:LongDescription>
 			</xtce:Parameter>
@@ -215,7 +209,6 @@
 				<xtce:EntryList>
 					<xtce:ParameterRefEntry parameterRef="ILO_SCI_DE.SHCOARSE" />
 					<xtce:ParameterRefEntry parameterRef="ILO_SCI_DE.DATA" />
-					<xtce:ParameterRefEntry parameterRef="ILO_SCI_DE.CHKSUM" />
 				</xtce:EntryList>
 			</xtce:SequenceContainer>
 			<xtce:SequenceContainer name="ILO_STAR">

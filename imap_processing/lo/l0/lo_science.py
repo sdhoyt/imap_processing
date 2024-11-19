@@ -343,14 +343,9 @@ def parse_variable_fields(
                 dataset, pkt_idx, bit_length, DE_BIT_SHIFT[field]
             )
             dataset.attrs["bit_pos"] += bit_length
-    dataset = check_for_padding(dataset)
 
     return dataset
 
-def check_for_padding(dataset: xr.Dataset):
-    if dataset.attrs["bit_pos"] == 32654:
-        dataset.attrs["bit_pos"] = dataset.attrs["bit_pos"] + 38
-    return dataset
 
 def parse_de_bin(
     dataset: xr.Dataset, pkt_idx: int, bit_length: int, bit_shift: int = 0
@@ -441,9 +436,9 @@ def combine_segmented_packets(dataset: xr.Dataset) -> xr.Dataset:
     ]
 
     # TEMP DEBUG CODE
-#     dataset["events"] = [
-#     event[:32650] + event[32650 + 40 :] for event in dataset["events"].values
-# ]
+    #     dataset["events"] = [
+    #     event[:32650] + event[32650 + 40 :] for event in dataset["events"].values
+    # ]
 
     print("valid groups", valid_groups)
     # drop any group of segmented packets that aren't sequential
