@@ -177,91 +177,56 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
     """
     # TODO: Add logging. Want to wait until I have a better understanding of how the
     #  DEs spread across multiple packets will work first
-    import csv
 
-    with open("events.csv", "w", newline="") as f:
-        writer = csv.writer(f)
-        writer.writerow(
-            [
-                "DE",
-                "bit_pos",
-                "SHCOARSE",
-                "ABSENT",
-                "DE TIME",
-                "EGY",
-                "MODE",
-                "TOF0",
-                "TOF1",
-                "TOF2",
-                "TOF3",
-                "CKSM",
-                "POS",
-            ]
+    # Sum each count to get the total number of direct events for the pointing
+    # parse the count and passes fields. These fields only occur once
+    # at the beginning of each packet group and are not part of the
+    # compressed direct event data
+    dataset["de_count"] = xr.DataArray(
+        [int(pkt[0:16], 2) for pkt in dataset["events"].values], dims="epoch",
+        attrs=attr_mgr.get_variable_attributes("de_count")
+    )
+    num_de: int = np.sum(dataset["de_count"].values)
+
+    de_fields = (
+        list(PACKET_FIELD_BITS._asdict().keys())
+        + list(FIXED_FIELD_BITS._asdict().keys())
+        + list(VARIABLE_FIELD_BITS._asdict().keys())
+    )
+    # Initialize all Direct Event fields with their fill value
+    # L1A Direct event data will not be tied to an epoch
+    # data will use a direct event index for the
+    # pointing as its coordinate/dimension
+    for field in de_fields:
+        dataset[field] = xr.DataArray(
+            np.full(num_de, attr_mgr.get_variable_attributes(field)["FILLVAL"]),
+            dims="direct_events", attrs=attr_mgr.get_variable_attributes(field)
         )
+    dataset["passes"] = xr.DataArray(
+        np.full(len(dataset["events"].values), attr_mgr.get_variable_attributes("passes")["FILLVAL"]),
+        dims="epoch", attrs=attr_mgr.get_variable_attributes("passes"))
 
-        # Sum each count to get the total number of direct events for the pointing
-        # parse the count and passes fields. These fields only occur once
-        # at the beginning of each packet group and are not part of the
-        # compressed direct event data
-        dataset["de_count"] = xr.DataArray(
-            [int(pkt[0:16], 2) for pkt in dataset["events"].values], dims="epoch"
-        )
-        num_de: int = np.sum(dataset["de_count"].values)
+    # The DE index for the entire pointing
+    pointing_de = 0
+    # for each direct event packet in the pointing
+    for pkt_idx, de_count in enumerate(dataset["de_count"].values):
+        # initialize the bit position for the packet
+        # after the counts field
+        dataset.attrs["bit_pos"] = 16
+        # Parse the passes field for the packet
+        dataset["passes"].values[pkt_idx] = parse_de_bin(dataset, pkt_idx, 32)
+        dataset.attrs["bit_pos"] = dataset.attrs["bit_pos"] + 32
 
-        de_fields = (
-            list(PACKET_FIELD_BITS._asdict().keys())
-            + list(FIXED_FIELD_BITS._asdict().keys())
-            + list(VARIABLE_FIELD_BITS._asdict().keys())
-        )
-        # Initialize all Direct Event fields with their fill value
-        # L1A Direct event data will not be tied to an epoch
-        # data will use a direct event index for the
-        # pointing as its coordinate/dimension
-        for field in de_fields:
-            dataset[field] = xr.DataArray(
-                np.full(num_de, attr_mgr.get_variable_attributes(field)["FILLVAL"]),
-                dims="direct_events",
-            )
+        # for each direct event in the packet
+        for _ in range(de_count):
+            # Parse the fixed fields for the direct event
+            # Coincidence Type, Time, ESA Step, Mode
+            dataset = parse_fixed_fields(dataset, pkt_idx, pointing_de)
+            # Parse the variable fields for the direct event
+            # TOF0, TOF1, TOF2, TOF3, Checksum, Position
+            dataset = parse_variable_fields(dataset, pkt_idx, pointing_de)
 
-        # The DE index for the entire pointing
-        pointing_de = 0
-        # for each direct event packet in the pointing
-        for pkt_idx, de_count in enumerate(dataset["de_count"].values):
-            # initialize the bit position for the packet
-            # after the counts field
-            dataset.attrs["bit_pos"] = 16
-            # Parse the passes field for the packet
-            dataset["passes"] = parse_de_bin(dataset, pkt_idx, 32)
-            dataset.attrs["bit_pos"] = 48
-
-            # for each direct event in the packet
-            for _ in range(de_count):
-                print("pointing_de", pointing_de)
-                # Parse the fixed fields for the direct event
-                # Coincidence Type, Time, ESA Step, Mode
-                dataset = parse_fixed_fields(dataset, pkt_idx, pointing_de)
-                # Parse the variable fields for the direct event
-                # TOF0, TOF1, TOF2, TOF3, Checksum, Position
-                dataset = parse_variable_fields(dataset, pkt_idx, pointing_de)
-                writer.writerow(
-                    [
-                        pointing_de,
-                        dataset.attrs["bit_pos"],
-                        dataset["shcoarse"].values[pkt_idx],
-                        dataset["coincidence_type"].values[pointing_de],
-                        dataset["de_time"].values[pointing_de],
-                        dataset["esa_step"].values[pointing_de],
-                        dataset["mode"].values[pointing_de],
-                        dataset["tof0"].values[pointing_de],
-                        dataset["tof1"].values[pointing_de],
-                        dataset["tof2"].values[pointing_de],
-                        dataset["tof3"].values[pointing_de],
-                        dataset["cksm"].values[pointing_de],
-                        dataset["pos"].values[pointing_de],
-                    ]
-                )
-
-                pointing_de += 1
+            pointing_de += 1
 
         return dataset
 
@@ -291,7 +256,6 @@ def parse_fixed_fields(
         Updated dataset with the fixed fields parsed.
     """
     for field, bit_length in FIXED_FIELD_BITS._asdict().items():
-        print("field", field)
         dataset[field].values[pointing_de] = parse_de_bin(dataset, pkt_idx, bit_length)
         dataset.attrs["bit_pos"] += bit_length
 
@@ -337,7 +301,6 @@ def parse_variable_fields(
         # Check which TOF fields should have been transmitted for this
         # case number / mode combination and decompress them.
         if field_exists:
-            print("field", field)
             bit_length = VARIABLE_FIELD_BITS._asdict()[field]
             dataset[field].values[pointing_de] = parse_de_bin(
                 dataset, pkt_idx, bit_length, DE_BIT_SHIFT[field]
@@ -371,8 +334,6 @@ def parse_de_bin(
     """
     bit_pos = dataset.attrs["bit_pos"]
 
-    print("bit_pos", bit_pos)
-    print("binary", dataset["events"].values[pkt_idx][bit_pos : bit_pos + bit_length])
     parsed_int = (
         int(
             dataset["events"].values[pkt_idx][bit_pos : bit_pos + bit_length],
@@ -380,7 +341,6 @@ def parse_de_bin(
         )
         << bit_shift
     )
-    print("value", parsed_int)
     return parsed_int
 
 
@@ -424,23 +384,11 @@ def combine_segmented_packets(dataset: xr.Dataset) -> xr.Dataset:
     valid_groups = find_valid_groups(seq_ctrs, seg_starts, seg_ends)
 
     # Combine the segmented packets into a single binary string
-    print("start", seg_starts)
-    print("end", seg_ends)
-    # Mark the end of a segment with a comma.
-    # This will be used to determine which bits
-    # are padding and not real data.
-
     dataset["events"] = [
         "".join(dataset["data"].values[start : end + 1])
         for start, end in zip(seg_starts, seg_ends)
     ]
 
-    # TEMP DEBUG CODE
-    #     dataset["events"] = [
-    #     event[:32650] + event[32650 + 40 :] for event in dataset["events"].values
-    # ]
-
-    print("valid groups", valid_groups)
     # drop any group of segmented packets that aren't sequential
     dataset["events"] = dataset["events"].values[valid_groups]
 
