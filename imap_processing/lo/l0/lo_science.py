@@ -183,8 +183,9 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
     # at the beginning of each packet group and are not part of the
     # compressed direct event data
     dataset["de_count"] = xr.DataArray(
-        [int(pkt[0:16], 2) for pkt in dataset["events"].values], dims="epoch",
-        attrs=attr_mgr.get_variable_attributes("de_count")
+        [int(pkt[0:16], 2) for pkt in dataset["events"].values],
+        dims="epoch",
+        attrs=attr_mgr.get_variable_attributes("de_count"),
     )
     num_de: int = np.sum(dataset["de_count"].values)
 
@@ -200,11 +201,17 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
     for field in de_fields:
         dataset[field] = xr.DataArray(
             np.full(num_de, attr_mgr.get_variable_attributes(field)["FILLVAL"]),
-            dims="direct_events", attrs=attr_mgr.get_variable_attributes(field)
+            dims="direct_events",
+            attrs=attr_mgr.get_variable_attributes(field),
         )
     dataset["passes"] = xr.DataArray(
-        np.full(len(dataset["events"].values), attr_mgr.get_variable_attributes("passes")["FILLVAL"]),
-        dims="epoch", attrs=attr_mgr.get_variable_attributes("passes"))
+        np.full(
+            len(dataset["events"].values),
+            attr_mgr.get_variable_attributes("passes")["FILLVAL"],
+        ),
+        dims="epoch",
+        attrs=attr_mgr.get_variable_attributes("passes"),
+    )
 
     # The DE index for the entire pointing
     pointing_de = 0

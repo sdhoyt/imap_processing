@@ -144,7 +144,7 @@ def add_dataset_attrs(
             data=np.arange(1, 8, dtype=np.uint8),
             name="esa_step",
             dims=["esa_step"],
-            attrs=attr_mgr.get_variable_attributes("esa_step"),
+            attrs=attr_mgr.get_variable_attributes("esa_step_coord"),
         )
         esa_step_label = xr.DataArray(
             esa_step.values.astype(str),
@@ -180,7 +180,6 @@ def add_dataset_attrs(
             ]
         )
     elif logical_source == "imap_lo_l1a_de":
-
         direct_events = xr.DataArray(
             data=np.arange(sum(dataset["de_count"].values), dtype=np.uint16),
             name="direct_events",
@@ -200,7 +199,7 @@ def add_dataset_attrs(
             direct_events_label=direct_events_label,
         )
 
-        #dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
+        # dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
         dataset.epoch.attrs.update(attr_mgr.get_variable_attributes("epoch"))
         dataset.attrs.update(attr_mgr.get_global_attributes(logical_source))
         dataset = dataset.drop_vars(
@@ -214,7 +213,7 @@ def add_dataset_attrs(
                 "pkt_len",
                 "shcoarse",
                 "data",
-                "events"
+                "events",
             ]
         )
         print(dataset)

@@ -1,8 +1,11 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
+from imap_processing import imap_module_directory
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
+from imap_processing.lo.l0.lo_apid import LoAPID
 from imap_processing.lo.l0.lo_science import (
     combine_segmented_packets,
     parse_de_bin,
@@ -10,10 +13,8 @@ from imap_processing.lo.l0.lo_science import (
     parse_fixed_fields,
     parse_variable_fields,
 )
-from imap_processing.utils import packet_file_to_datasets, convert_to_binary_string
-from imap_processing import imap_module_directory
-from imap_processing.lo.l0.lo_apid import LoAPID
-import pandas as pd
+from imap_processing.utils import convert_to_binary_string, packet_file_to_datasets
+
 
 @pytest.fixture()
 def fake_de_dataset():
@@ -69,16 +70,20 @@ def fake_de_dataset():
 
     return dataset
 
+
 @pytest.fixture()
 def sample_data():
     xtce_file = imap_module_directory / "lo/packet_definitions/lo_xtce.xml"
-    dependency = imap_module_directory / "tests/lo/test_pkts/imap_lo_l0_raw_20240803_v002.pkts"
+    dependency = (
+        imap_module_directory / "tests/lo/test_pkts/imap_lo_l0_raw_20240803_v002.pkts"
+    )
     datasets_by_apid = packet_file_to_datasets(
         packet_file=dependency.resolve(),
         xtce_packet_definition=xtce_file.resolve(),
         use_derived_value=False,
     )
     return datasets_by_apid
+
 
 @pytest.fixture()
 def segmented_pkts_fake_data():
@@ -224,9 +229,13 @@ def test_combine_segmented_packets(segmented_pkts_fake_data):
     )
     np.testing.assert_array_equal(dataset["epoch"].values, np.array([0, 10, 30]))
 
+
 def test_validate_parse_events(sample_data, attr_mgr):
     de_data = sample_data[LoAPID.ILO_SCI_DE]
-    validation_path = imap_module_directory / "tests/lo/validation_data/Instrument_FM1_T104_R129_20240803_ILO_SCI_DE_dec_DN_with_fills.csv"
+    validation_path = (
+        imap_module_directory
+        / "tests/lo/validation_data/Instrument_FM1_T104_R129_20240803_ILO_SCI_DE_dec_DN_with_fills.csv"
+    )
 
     validation_data = pd.read_csv(validation_path)
     de_fields = [
@@ -243,10 +252,7 @@ def test_validate_parse_events(sample_data, attr_mgr):
     ]
 
     de_data["data"] = xr.DataArray(
-        [
-            convert_to_binary_string(data)
-            for data in de_data["data"].values
-        ],
+        [convert_to_binary_string(data) for data in de_data["data"].values],
         dims=de_data["data"].dims,
         attrs=de_data["data"].attrs,
     )
@@ -254,7 +260,9 @@ def test_validate_parse_events(sample_data, attr_mgr):
     dataset = parse_events(de_data, attr_mgr)
 
     for field in de_fields:
-        np.testing.assert_array_equal(dataset[field].values, validation_data[field.upper()].values)
+        np.testing.assert_array_equal(
+            dataset[field].values, validation_data[field.upper()].values
+        )
 
     assert dataset["de_count"].values == 1998
     assert dataset["passes"].values == 8
