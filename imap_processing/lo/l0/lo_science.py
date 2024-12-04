@@ -1,5 +1,6 @@
 """Processing function for Lo Science Data."""
 
+import logging
 from collections import namedtuple
 
 import numpy as np
@@ -20,6 +21,9 @@ from imap_processing.lo.l0.utils.bit_decompression import (
     decompress_int,
 )
 from imap_processing.utils import convert_to_binary_string
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
 
 HistPacking = namedtuple(
     "HistPacking",
@@ -175,9 +179,7 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
     dataset : xr.Dataset
         Parsed and decompressed direct event data.
     """
-    # TODO: Add logging. Want to wait until I have a better understanding of how the
-    #  DEs spread across multiple packets will work first
-
+    logger.info("\n Parsing Lo L1A Direct Events")
     # Sum each count to get the total number of direct events for the pointing
     # parse the count and passes fields. These fields only occur once
     # at the beginning of each packet group and are not part of the
@@ -188,6 +190,8 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
         attrs=attr_mgr.get_variable_attributes("de_count"),
     )
     num_de: int = np.sum(dataset["de_count"].values)
+
+    logger.info(f"Total number of direct events in this ASC: {num_de}")
 
     de_fields = (
         list(PACKET_FIELD_BITS._asdict().keys())
@@ -235,7 +239,8 @@ def parse_events(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.Dataset
 
             pointing_de += 1
 
-        return dataset
+    logger.info("\n Returning Lo L1A Direct Events Dataset")
+    return dataset
 
 
 def parse_fixed_fields(
