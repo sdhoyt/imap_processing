@@ -165,7 +165,7 @@ tof0:
   VALIDMAX: 4096
   FORMAT: I4
   CATDESC: Time of Flight
-  FIELDNAM: Time of Flight 2
+  FIELDNAM: Time of Flight 0
   LABLAXIS: ToF 0
 
 tof1:

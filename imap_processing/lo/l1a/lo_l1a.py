@@ -206,6 +206,7 @@ def add_dataset_attrs(
         )
         # add the epoch and global attributes
         dataset.epoch.attrs.update(attr_mgr.get_variable_attributes("epoch"))
+        dataset.shcoarse.attrs.update(attr_mgr.get_variable_attributes("shcoarse"))
         dataset.attrs.update(attr_mgr.get_global_attributes(logical_source))
         dataset = dataset.drop_vars(
             [
@@ -216,7 +217,6 @@ def add_dataset_attrs(
                 "seq_flgs",
                 "src_seq_ctr",
                 "pkt_len",
-                "shcoarse",
                 "data",
                 "events",
             ]
