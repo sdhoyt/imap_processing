@@ -1,6 +1,5 @@
 """IMAP-Lo L1B Data Processing."""
 
-from collections import namedtuple
 from dataclasses import Field
 from pathlib import Path
 
@@ -8,6 +7,12 @@ import numpy as np
 import xarray as xr
 
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
+from imap_processing.lo.l1b.lo_conversions import (
+    TOF0_CONV,
+    TOF1_CONV,
+    TOF2_CONV,
+    TOF3_CONV,
+)
 from imap_processing.spice.time import met_to_ttj2000ns
 
 
@@ -37,26 +42,64 @@ def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
 
     if "imap_lo_l1a_de" in dependencies and "imap_lo_l1a_spin" in dependencies:
         logical_source = "imap_lo_l1b_de"
-        # TODO: TEMPORARY. Need to update to use the L1B data class once that exists
-        #  and I have sample data.
-        data_field_tup = namedtuple("data_field_tup", ["name"])
-        data_fields = [
-            data_field_tup("ESA_STEP"),
-            data_field_tup("MODE"),
-            data_field_tup("TOF0"),
-            data_field_tup("TOF1"),
-            data_field_tup("TOF2"),
-            data_field_tup("TOF3"),
-            data_field_tup("COINCIDENCE_TYPE"),
-            data_field_tup("POS"),
-            data_field_tup("COINCIDENCE"),
-            data_field_tup("BADTIME"),
-            data_field_tup("DIRECTION"),
-        ]
+        print(dependencies["imap_lo_l1a_de"])
+        print(dependencies["imap_lo_l1a_spin"])
+        dataset = xr.Dataset(
+            attrs=attr_mgr.get_global_attributes(logical_source),
+        )
 
-    dataset: list[Path] = create_datasets(attr_mgr, logical_source, data_fields)  # type: ignore[arg-type]
-    # TODO Remove once data_fields is removed from create_datasets
-    return dataset
+        spin_data = dependencies["imap_lo_l1a_spin"]
+
+        # Get the avg spin duration for each spin epoch
+        avg_spin_durations = (spin_data["stop_acq"] - spin_data["start_acq"]) / 28
+
+        ### FIND CLOSEST STOP ACQ TO DE TIME ###
+        shcoarse = dependencies["imap_lo_l1a_de"]["SHCOARSE"].values
+        stop_acq = dependencies["imap_lo_l1a_spin"]["stop_acq"].values
+
+        # Find the closest stop_acq for each shcoarse
+        closest_stop_acq_indices = np.abs(shcoarse[:, None] - stop_acq).argmin(axis=1)
+        closest_stop_acq = stop_acq[closest_stop_acq_indices]
+
+        print(closest_stop_acq)
+        #########################################
+
+        ##### CONVERT EU TODO: MOVE TO FUNCTION #######################
+        tof_fields = ["tof0", "tof1", "tof2", "tof3"]
+        tof_conversions = [TOF0_CONV, TOF1_CONV, TOF2_CONV, TOF3_CONV]
+
+        for tof, conv in zip(tof_fields, tof_conversions):
+            # convert the DE TOF to engineering units
+            tof_eu = conv.C0 + 2 * conv.C1 * dependencies["imap_lo_l1a_de"][tof]
+
+            # Add the EU TOF to the dataset
+            dataset[tof] = xr.DataArray(
+                tof_eu,
+                dims=["epoch"],
+                attrs=attr_mgr.get_variable_attributes(tof),
+            )
+        #####################################
+
+        # line up each DE SHCOARSE with the stop Acq for each spin epoch by finding the
+        # closest stop acq to the DE time
+        # calculate the average spin duration for each spin epoch using the following:
+        #   (stop acq - start acq) / 28
+        # Assign each DE to a spin number using the following:
+        #   spin_cycle = spin_start_number + 7 + (ESA_step - 1) * 2
+
+        # Set Coincidence strings
+
+        # species identification
+
+        # initialize badtimes
+
+        # set spin bin
+
+        # create pointing bin
+
+        # set direction
+
+    # return dataset
 
 
 # TODO: This is going to work differently when I sample data.
