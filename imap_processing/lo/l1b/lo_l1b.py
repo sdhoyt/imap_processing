@@ -50,19 +50,25 @@ def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
 
         spin_data = dependencies["imap_lo_l1a_spin"]
 
+        ########## AVERAGE SPIN DURATION ##################
         # Get the avg spin duration for each spin epoch
-        avg_spin_durations = (spin_data["stop_acq"] - spin_data["start_acq"]) / 28
+        acq_start = spin_data["acq_start_sec"] + spin_data["acq_start_subsec"] * 1e-6
+        acq_end = spin_data["acq_end_sec"] + spin_data["acq_end_subsec"] * 1e-6
+        avg_spin_durations = (acq_end - acq_start) / 28
+        ###################################################
 
         ### FIND CLOSEST STOP ACQ TO DE TIME ###
         shcoarse = dependencies["imap_lo_l1a_de"]["SHCOARSE"].values
-        stop_acq = dependencies["imap_lo_l1a_spin"]["stop_acq"].values
 
         # Find the closest stop_acq for each shcoarse
-        closest_stop_acq_indices = np.abs(shcoarse[:, None] - stop_acq).argmin(axis=1)
-        closest_stop_acq = stop_acq[closest_stop_acq_indices]
+        closest_stop_acq_indices = np.abs(shcoarse[:, None] - acq_end).argmin(axis=1)
+        closest_stop_acq = acq_end[closest_stop_acq_indices]
 
         print(closest_stop_acq)
         #########################################
+
+
+
 
         ##### CONVERT EU TODO: MOVE TO FUNCTION #######################
         tof_fields = ["tof0", "tof1", "tof2", "tof3"]
