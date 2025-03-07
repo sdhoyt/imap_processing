@@ -78,20 +78,27 @@ def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
 
     return [l1b_de]
 
+
 def convert_start_end_times(spin_data: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
     # Convert subseconds from microseconds to seconds
     acq_start = spin_data["acq_start_sec"] + spin_data["acq_start_subsec"] * 1e-6
     acq_end = spin_data["acq_end_sec"] + spin_data["acq_end_subsec"] * 1e-6
     return (acq_start, acq_end)
-def get_avg_spin_durations(acq_start: xr.DataArray, acq_end: xr.DataArray) -> xr.DataArray:
+
+
+def get_avg_spin_durations(
+    acq_start: xr.DataArray, acq_end: xr.DataArray
+) -> xr.DataArray:
     # Get the avg spin duration for each spin epoch
     avg_spin_durations = (acq_end - acq_start) / 28
     return avg_spin_durations
 
-def get_spin_phase(l1a_de_data: xr.Dataset, avg_spin_durations: xr.DataArray) -> np.array:
+
+def get_spin_phase(
+    l1a_de_data: xr.Dataset, avg_spin_durations: xr.DataArray
+) -> np.array:
     counts = l1a_de_data["de_count"]
-    de_time_asc_groups = np.split(l1a_de_data["de_time"].values,
-                                  np.cumsum(counts)[:-1])
+    de_time_asc_groups = np.split(l1a_de_data["de_time"].values, np.cumsum(counts)[:-1])
     print("average de time", np.average(l1a_de_data["de_time"].values))
     print("std de time", np.std(l1a_de_data["de_time"].values))
     print("min de time", np.min(l1a_de_data["de_time"].values))
@@ -101,11 +108,15 @@ def get_spin_phase(l1a_de_data: xr.Dataset, avg_spin_durations: xr.DataArray) ->
     for i, groups in enumerate(de_time_asc_groups):
         print("groups", groups)
         print("avg_spin_durations", avg_spin_durations[i])
-        print("spin phase", np.array(groups) / np.array(avg_spin_durations[i].values) * 360)
+        print(
+            "spin phase",
+            np.array(groups) / np.array(avg_spin_durations[i].values) * 360,
+        )
 
         spin_phase.extend(groups / avg_spin_durations[i].values * 360)
 
     return np.array(spin_phase)
+
 
 def set_spin_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     # Get the spin bin for each DE
@@ -117,6 +128,7 @@ def set_spin_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
         # attrs=attr_mgr.get_variable_attributes("spin_bin"),
     )
     return l1b_de
+
 
 def set_pointing_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     # TODO: Need to add on the 40 bins in the 2nd dimension
@@ -130,17 +142,20 @@ def set_pointing_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     )
     return l1b_de
 
-def find_closest_stop_acq_to_de_pkt_time(l1a_de: xr.DataArray, acq_end: xr.DataArray) -> xr.DataArray:
+
+def find_closest_stop_acq_to_de_pkt_time(
+    l1a_de: xr.DataArray, acq_end: xr.DataArray
+) -> xr.DataArray:
     shcoarse = l1a_de["shcoarse"].values
     # Find the closest stop_acq for each shcoarse
     closest_stop_acq_indices = np.abs(shcoarse[:, None] - acq_end.values).argmin(axis=1)
     closest_stop_acq = acq_end[closest_stop_acq_indices]
     return closest_stop_acq
 
+
 def set_spin_cylce(l1a_de: xr.Dataset, l1b_de: xr.Dataset) -> xr.Dataset:
     counts = l1a_de["de_count"]
-    de_asc_groups = np.split(l1a_de["esa_step"].values,
-                             np.cumsum(counts)[:-1])
+    de_asc_groups = np.split(l1a_de["esa_step"].values, np.cumsum(counts)[:-1])
     spin_cycle = []
     for i, groups in enumerate(de_asc_groups):
         # TODO: Spin Number does not reset for each pointing. Need to figure out
@@ -157,6 +172,7 @@ def set_spin_cylce(l1a_de: xr.Dataset, l1b_de: xr.Dataset) -> xr.Dataset:
 
     return l1b_de
 
+
 def calculate_tof1_for_golden_triples(l1a_de: xr.Dataset) -> xr.Dataset:
     print("l1a_de coincidence type", l1a_de["coincidence_type"])
     for idx, coin_type in enumerate(l1a_de["coincidence_type"].values):
@@ -168,11 +184,16 @@ def calculate_tof1_for_golden_triples(l1a_de: xr.Dataset) -> xr.Dataset:
             cksm = l1a_de["cksm"][idx]
             # TODO: will get left ckecksum boundary from LUT table when available
             left_cksm_bound = 21
-            l1a_de["tof1"][
-                idx] = tof0 + tof3 - tof2 - cksm - left_cksm_bound
+            l1a_de["tof1"][idx] = tof0 + tof3 - tof2 - cksm - left_cksm_bound
     return l1a_de
 
-def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: ImapCdfAttributes, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_coincidence_type(
+    l1a_de: xr.Dataset,
+    l1b_de: xr.Dataset,
+    attr_mgr_l1a: ImapCdfAttributes,
+    attr_mgr_l1b: ImapCdfAttributes,
+):
     tof0_fill = attr_mgr_l1a.get_variable_attributes("tof0")["FILLVAL"]
     tof0_mask = l1a_de["tof0"] != tof0_fill
     tof1_fill = attr_mgr_l1a.get_variable_attributes("tof1")["FILLVAL"]
@@ -186,7 +207,8 @@ def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: I
 
     coincidence_type = [
         f"{tof0_mask[i]}{tof1_mask[i]}{tof2_mask[i]}{tof3_mask[i]}{cksm_mask[i]}{l1a_de['mode'][i]}"
-        for i in range(l1a_de["de_count"].values.sum())]
+        for i in range(l1a_de["de_count"].values.sum())
+    ]
 
     l1b_de["coincidence_type"] = xr.DataArray(
         coincidence_type,
@@ -197,7 +219,13 @@ def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: I
 
     return l1b_de
 
-def convert_tofs_to_eu(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: ImapCdfAttributes, attr_mgr_l1b: ImapCdfAttributes):
+
+def convert_tofs_to_eu(
+    l1a_de: xr.Dataset,
+    l1b_de: xr.Dataset,
+    attr_mgr_l1a: ImapCdfAttributes,
+    attr_mgr_l1b: ImapCdfAttributes,
+):
     tof_fields = ["tof0", "tof1", "tof2", "tof3"]
     tof_conversions = [TOF0_CONV, TOF1_CONV, TOF2_CONV, TOF3_CONV]
 
@@ -222,7 +250,10 @@ def convert_tofs_to_eu(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: Ima
 
     return l1b_de
 
-def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_species(
+    l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes
+):
     # Get the species identification for each DE
     # read in species identification tables
     # select from U_PAC options
@@ -236,23 +267,23 @@ def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAtt
     range_O2_TOF0S_UPAC_7 = (150, 300)
 
     # Initialize the species array with U for Unknown
-    species = np.full(l1a_de["de_count"].values.sum(), 'U')
+    species = np.full(l1a_de["de_count"].values.sum(), "U")
 
     tof0 = l1a_de["tof0"]
     tof2 = l1a_de["tof2"]
     tof3 = l1a_de["tof3"]
     tof0s = tof0 + tof3 / 2
     # Check for range Hydrogen
-    mask_H = ((tof2 >= range_H1_TOF2_U_PAC_7[0]) & (
-                tof2 <= range_H1_TOF2_U_PAC_7[1])) | (
-                     (tof0s >= range_H2_TOF0S_U_PAC_7[0]) & (
-                         tof0s <= range_H2_TOF0S_U_PAC_7[1]))
-    species[mask_H] = 'H'
+    mask_H = (
+        (tof2 >= range_H1_TOF2_U_PAC_7[0]) & (tof2 <= range_H1_TOF2_U_PAC_7[1])
+    ) | ((tof0s >= range_H2_TOF0S_U_PAC_7[0]) & (tof0s <= range_H2_TOF0S_U_PAC_7[1]))
+    species[mask_H] = "H"
 
     # Check for range Oxygen
     mask_O = ((tof2 >= range_O1_TOF2_UPAC_7[0]) & (tof2 <= range_O1_TOF2_UPAC_7[1])) | (
-            (tof0s >= range_O2_TOF0S_UPAC_7[0]) & (tof0s <= range_O2_TOF0S_UPAC_7[1]))
-    species[mask_O] = 'O'
+        (tof0s >= range_O2_TOF0S_UPAC_7[0]) & (tof0s <= range_O2_TOF0S_UPAC_7[1])
+    )
+    species[mask_O] = "O"
 
     # Add species to the dataset
     l1b_de["species"] = xr.DataArray(
@@ -264,7 +295,10 @@ def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAtt
 
     return l1b_de
 
-def set_bad_times(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_bad_times(
+    l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes
+):
     # Initialize all times as not bad for now
     # 1 = badtime, 0 = not badtime
     l1b_de["badtimes"] = xr.DataArray(
@@ -275,6 +309,7 @@ def set_bad_times(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfA
     )
 
     return l1b_de
+
 
 def create_datasets(
     attr_mgr: ImapCdfAttributes,

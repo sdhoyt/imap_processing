@@ -408,8 +408,9 @@ def combine_segmented_packets(dataset: xr.Dataset) -> xr.Dataset:
 
     # Update the epoch and shcoarse to the first epoch in the segment
     dataset.coords["epoch"] = dataset["epoch"].values[seg_starts]
-    dataset["shcoarse"] = xr.DataArray(dataset["shcoarse"].values[seg_starts],
-                                       dims="epoch")
+    dataset["shcoarse"] = xr.DataArray(
+        dataset["shcoarse"].values[seg_starts], dims="epoch"
+    )
     # drop any group of segmented epochs and shcoarse that aren't sequential
     dataset.coords["epoch"] = dataset["epoch"].values[valid_groups]
     dataset["shcoarse"].values = dataset["shcoarse"].values[valid_groups]
