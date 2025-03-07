@@ -286,11 +286,11 @@ def add_dataset_attrs(
                 "seq_flgs",
                 "src_seq_ctr",
                 "pkt_len",
-                "shcoarse",
                 "data",
                 "events",
             ]
         )
+        print(dataset)
         # An empty DEPEND_0 is being added to support_data
         # variables that should only have DEPEND_1
         # Removing Depend_0 here.
