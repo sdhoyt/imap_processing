@@ -13,8 +13,8 @@ from imap_processing.lo.l1b.lo_conversions import (
     TOF2_CONV,
     TOF3_CONV,
 )
+from imap_processing.spice.geometry import SpiceFrame, instrument_pointing
 from imap_processing.spice.time import met_to_ttj2000ns, ttj2000ns_to_et
-from imap_processing.spice.geometry import instrument_pointing, SpiceFrame
 
 
 def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
@@ -64,8 +64,9 @@ def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
         # set the spin cycle for each direct event
         l1b_de = set_spin_cycle(l1a_de, l1b_de)
         # get the absolute met for each event
-        l1b_de = set_absolute_event_time(l1a_de, l1b_de, spin_data, avg_spin_durations,
-                                         closest_spin_idx)
+        l1b_de = set_absolute_event_time(
+            l1a_de, l1b_de, spin_data, avg_spin_durations, closest_spin_idx
+        )
         # set the epoch for each event
         l1b_de = set_each_event_epoch(l1b_de)
         # calculate and set the pointing bin based on the spin phase
@@ -86,7 +87,10 @@ def lo_l1b(dependencies: dict, data_version: str) -> list[Path]:
 
     return [l1b_de]
 
-def intialize_l1b_de(l1a_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes, logical_source: str) -> xr.Dataset:
+
+def intialize_l1b_de(
+    l1a_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes, logical_source: str
+) -> xr.Dataset:
     l1b_de = xr.Dataset(
         attrs=attr_mgr_l1b.get_global_attributes(logical_source),
     )
@@ -125,21 +129,28 @@ def convert_start_end_times(spin_data: xr.Dataset) -> tuple[xr.DataArray, xr.Dat
     acq_start = spin_data["acq_start_sec"] + spin_data["acq_start_subsec"] * 1e-6
     acq_end = spin_data["acq_end_sec"] + spin_data["acq_end_subsec"] * 1e-6
     return (acq_start, acq_end)
-def get_avg_spin_durations(acq_start: xr.DataArray, acq_end: xr.DataArray) -> xr.DataArray:
+
+
+def get_avg_spin_durations(
+    acq_start: xr.DataArray, acq_end: xr.DataArray
+) -> xr.DataArray:
     # Get the avg spin duration for each spin epoch
     avg_spin_durations = (acq_end - acq_start) / 28
     return avg_spin_durations
 
-def get_spin_phase(l1a_de_data: xr.Dataset, avg_spin_durations: xr.DataArray) -> np.array:
+
+def get_spin_phase(
+    l1a_de_data: xr.Dataset, avg_spin_durations: xr.DataArray
+) -> np.array:
     counts = l1a_de_data["de_count"]
-    de_time_asc_groups = np.split(l1a_de_data["de_time"].values,
-                                  np.cumsum(counts)[:-1])
+    de_time_asc_groups = np.split(l1a_de_data["de_time"].values, np.cumsum(counts)[:-1])
     spin_phase = []
     for i, groups in enumerate(de_time_asc_groups):
-        #spin_phase.extend(groups / avg_spin_durations[i].values * 360)
+        # spin_phase.extend(groups / avg_spin_durations[i].values * 360)
         # DE Time is 12 bit DN. The max possible value is 4095
         spin_phase.extend(groups / 4096 * 360)
     return np.array(spin_phase)
+
 
 def set_spin_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     # Get the spin bin for each DE
@@ -152,27 +163,21 @@ def set_spin_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     )
     return l1b_de
 
+
 def set_pointing_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     # TODO: Need to add on the 40 bins in the 2nd dimension
     # Get the pointing bin for each DE
     pointing_bin = np.full((3600, 40), np.nan)
-
-
 
     pointing_bin = (spin_phase // 0.1).astype(int)
     # TODO: need to calculate the epoch first
 
     et = ttj2000ns_to_et(l1b_de["epoch"])
 
-
-    direction = instrument_pointing(et,
-                                    SpiceFrame.IMAP_LO,
-                                    SpiceFrame.IMAP_DPS)
+    direction = instrument_pointing(et, SpiceFrame.IMAP_LO, SpiceFrame.IMAP_DPS)
     print("direction", direction)
 
-    #pointing_bin_z =
-
-
+    # pointing_bin_z =
 
     l1b_de["pointing_bin"] = xr.DataArray(
         pointing_bin,
@@ -182,16 +187,19 @@ def set_pointing_bin(l1b_de: xr.Dataset, spin_phase: np.array) -> xr.Dataset:
     )
     return l1b_de
 
-def find_closest_spin_to_de_pkt_time(l1a_de: xr.DataArray, acq_end: xr.DataArray) -> xr.DataArray:
+
+def find_closest_spin_to_de_pkt_time(
+    l1a_de: xr.DataArray, acq_end: xr.DataArray
+) -> xr.DataArray:
     shcoarse = l1a_de["shcoarse"].values
     # Find the closest stop_acq for each shcoarse
     closest_stop_acq_indices = np.abs(shcoarse[:, None] - acq_end.values).argmin(axis=1)
     return closest_stop_acq_indices
 
+
 def set_spin_cycle(l1a_de: xr.Dataset, l1b_de: xr.Dataset) -> xr.Dataset:
     counts = l1a_de["de_count"]
-    de_asc_groups = np.split(l1a_de["esa_step"].values,
-                             np.cumsum(counts)[:-1])
+    de_asc_groups = np.split(l1a_de["esa_step"].values, np.cumsum(counts)[:-1])
     spin_cycle = []
     for i, groups in enumerate(de_asc_groups):
         # TODO: Spin Number does not reset for each pointing. Need to figure out
@@ -208,14 +216,28 @@ def set_spin_cycle(l1a_de: xr.Dataset, l1b_de: xr.Dataset) -> xr.Dataset:
 
     return l1b_de
 
-def set_absolute_event_time(l1a_de: xr.Dataset, l1b_de: xr.Dataset, spin_data: xr.Dataset, avg_spin_durations: xr.DataArray, closest_spin_idx: np.array) -> np.array:
+
+def set_absolute_event_time(
+    l1a_de: xr.Dataset,
+    l1b_de: xr.Dataset,
+    spin_data: xr.Dataset,
+    avg_spin_durations: xr.DataArray,
+    closest_spin_idx: np.array,
+) -> np.array:
     spin_cycle_num = l1b_de["spin_cycle"] % 28
-    start_sec_spins = np.take(spin_data["start_sec_spin"][closest_spin_idx].values, spin_cycle_num.values)
-    start_subsec_spins = np.take(spin_data["start_subsec_spin"][closest_spin_idx].values, spin_cycle_num.values) * 1e-6
+    start_sec_spins = np.take(
+        spin_data["start_sec_spin"][closest_spin_idx].values, spin_cycle_num.values
+    )
+    start_subsec_spins = (
+        np.take(
+            spin_data["start_subsec_spin"][closest_spin_idx].values,
+            spin_cycle_num.values,
+        )
+        * 1e-6
+    )
     spin_start_time = start_sec_spins + start_subsec_spins
     counts = l1a_de["de_count"]
-    de_time_asc_groups = np.split(l1a_de["de_time"].values,
-                                  np.cumsum(counts)[:-1])
+    de_time_asc_groups = np.split(l1a_de["de_time"].values, np.cumsum(counts)[:-1])
     de_times_eu = []
     for i, groups in enumerate(de_time_asc_groups):
         # DE Time is 12 bit DN. The max possible value is 4096
@@ -228,6 +250,7 @@ def set_absolute_event_time(l1a_de: xr.Dataset, l1b_de: xr.Dataset, spin_data: x
     )
     return l1b_de
 
+
 def set_each_event_epoch(l1b_de: xr.Dataset) -> xr.Dataset:
     l1b_de["epoch"] = xr.DataArray(
         met_to_ttj2000ns(l1b_de["event_met"].values),
@@ -235,6 +258,8 @@ def set_each_event_epoch(l1b_de: xr.Dataset) -> xr.Dataset:
         # attrs=attr_mgr.get_variable_attributes("epoch")
     )
     return l1b_de
+
+
 def calculate_tof1_for_golden_triples(l1a_de: xr.Dataset) -> xr.Dataset:
     print("l1a_de coincidence type", l1a_de["coincidence_type"])
     for idx, coin_type in enumerate(l1a_de["coincidence_type"].values):
@@ -252,11 +277,16 @@ def calculate_tof1_for_golden_triples(l1a_de: xr.Dataset) -> xr.Dataset:
             left_cksm_bound = -21
             # Calculate TOF1, then left bit shift it to store it with the rest of the
             # left shifted L1A dataset data.
-            l1a_de["tof1"][
-                idx] = (tof0 + tof3 - tof2 - cksm - left_cksm_bound) << 1
+            l1a_de["tof1"][idx] = (tof0 + tof3 - tof2 - cksm - left_cksm_bound) << 1
     return l1a_de
 
-def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: ImapCdfAttributes, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_coincidence_type(
+    l1a_de: xr.Dataset,
+    l1b_de: xr.Dataset,
+    attr_mgr_l1a: ImapCdfAttributes,
+    attr_mgr_l1b: ImapCdfAttributes,
+):
     tof0_fill = attr_mgr_l1a.get_variable_attributes("tof0")["FILLVAL"]
     tof0_mask = l1a_de["tof0"].values != tof0_fill
     tof1_fill = attr_mgr_l1a.get_variable_attributes("tof1")["FILLVAL"]
@@ -270,7 +300,8 @@ def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: I
 
     coincidence_type = [
         f"{int(tof0_mask[i])}{int(tof1_mask[i])}{int(tof2_mask[i])}{int(tof3_mask[i])}{int(cksm_mask[i])}{l1a_de['mode'].values[i]}"
-        for i in range(l1a_de["de_count"].values.sum())]
+        for i in range(l1a_de["de_count"].values.sum())
+    ]
 
     l1b_de["coincidence_type"] = xr.DataArray(
         coincidence_type,
@@ -281,7 +312,13 @@ def set_coincidence_type(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: I
 
     return l1b_de
 
-def convert_tofs_to_eu(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: ImapCdfAttributes, attr_mgr_l1b: ImapCdfAttributes):
+
+def convert_tofs_to_eu(
+    l1a_de: xr.Dataset,
+    l1b_de: xr.Dataset,
+    attr_mgr_l1a: ImapCdfAttributes,
+    attr_mgr_l1b: ImapCdfAttributes,
+):
     tof_fields = ["tof0", "tof1", "tof2", "tof3"]
     tof_conversions = [TOF0_CONV, TOF1_CONV, TOF2_CONV, TOF3_CONV]
 
@@ -306,7 +343,10 @@ def convert_tofs_to_eu(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1a: Ima
 
     return l1b_de
 
-def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_species(
+    l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes
+):
     # Get the species identification for each DE
     # read in species identification tables
     # select from U_PAC options
@@ -320,23 +360,23 @@ def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAtt
     range_O2_TOF0S_UPAC_7 = (150, 300)
 
     # Initialize the species array with U for Unknown
-    species = np.full(l1a_de["de_count"].values.sum(), 'U')
+    species = np.full(l1a_de["de_count"].values.sum(), "U")
 
     tof0 = l1a_de["tof0"]
     tof2 = l1a_de["tof2"]
     tof3 = l1a_de["tof3"]
     tof0s = tof0 + tof3 / 2
     # Check for range Hydrogen
-    mask_H = ((tof2 >= range_H1_TOF2_U_PAC_7[0]) & (
-                tof2 <= range_H1_TOF2_U_PAC_7[1])) | (
-                     (tof0s >= range_H2_TOF0S_U_PAC_7[0]) & (
-                         tof0s <= range_H2_TOF0S_U_PAC_7[1]))
-    species[mask_H] = 'H'
+    mask_H = (
+        (tof2 >= range_H1_TOF2_U_PAC_7[0]) & (tof2 <= range_H1_TOF2_U_PAC_7[1])
+    ) | ((tof0s >= range_H2_TOF0S_U_PAC_7[0]) & (tof0s <= range_H2_TOF0S_U_PAC_7[1]))
+    species[mask_H] = "H"
 
     # Check for range Oxygen
     mask_O = ((tof2 >= range_O1_TOF2_UPAC_7[0]) & (tof2 <= range_O1_TOF2_UPAC_7[1])) | (
-            (tof0s >= range_O2_TOF0S_UPAC_7[0]) & (tof0s <= range_O2_TOF0S_UPAC_7[1]))
-    species[mask_O] = 'O'
+        (tof0s >= range_O2_TOF0S_UPAC_7[0]) & (tof0s <= range_O2_TOF0S_UPAC_7[1])
+    )
+    species[mask_O] = "O"
 
     # Add species to the dataset
     l1b_de["species"] = xr.DataArray(
@@ -348,7 +388,10 @@ def set_species(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAtt
 
     return l1b_de
 
-def set_bad_times(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes):
+
+def set_bad_times(
+    l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfAttributes
+):
     # Initialize all times as not bad for now
     # 1 = badtime, 0 = not badtime
     l1b_de["badtimes"] = xr.DataArray(
@@ -359,6 +402,7 @@ def set_bad_times(l1a_de: xr.Dataset, l1b_de: xr.Dataset, attr_mgr_l1b: ImapCdfA
     )
 
     return l1b_de
+
 
 def create_datasets(
     attr_mgr: ImapCdfAttributes,
