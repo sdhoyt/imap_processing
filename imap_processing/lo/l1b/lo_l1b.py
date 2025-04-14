@@ -248,18 +248,41 @@ def set_spin_cycle(l1a_de: xr.Dataset, l1b_de: xr.Dataset) -> xr.Dataset:
         The L1B DE dataset with the spin cycle added for each direct event.
     """
     counts = l1a_de["de_count"].values
-    # split the esa_steps into ASC groups
+    # print()
+    # print("Counts: ", counts)
+    # print("ESA Steps: ", l1a_de["esa_step"].values)
+    # # split the esa_steps into ASC groups
     de_asc_groups = np.split(l1a_de["esa_step"].values, np.cumsum(counts)[:-1])
+    # print("DE ASC Groups: ", de_asc_groups)
+    # spin_cycle = []
+    # for i, esa_asc_group in enumerate(de_asc_groups):
+    #     # TODO: Spin Number does not reset for each pointing. Need to figure out
+    #     #  how to retain this information across days
+    #     # increment the spin_start by 28 after each aggregated science cycle
+    #     spin_start = i * 28
+    #     # calculate the spin cycle for each DE in the ASC group
+    #     # TODO: Add equation number in algorithm document when new version is
+    #     # available. Add to docstring as well
+    #     spin_cycle.extend(spin_start + 7 + (esa_asc_group - 1) * 2)
+
+    counts = l1a_de["de_count"].values
+
+    # Calculate start and stop indices
+    stop_indices = np.cumsum(counts)
+    start_indices = np.insert(stop_indices[:-1], 0, 0)
     spin_cycle = []
-    for i, esa_asc_group in enumerate(de_asc_groups):
-        # TODO: Spin Number does not reset for each pointing. Need to figure out
-        #  how to retain this information across days
-        # increment the spin_start by 28 after each aggregated science cycle
+    # spin_start = [0, 28]
+    # print("spin_start", spin_start)
+    # spin_cycle = spin_start + 7 + (de_asc_groups - 1) * 2
+
+    for i ,(group_start, group_end) in enumerate(zip(start_indices, stop_indices)):
+        # Get the esa_step for the current group
+        group_ds = l1a_de.isel(direct_events=slice(group_start, group_end))
         spin_start = i * 28
-        # calculate the spin cycle for each DE in the ASC group
-        # TODO: Add equation number in algorithm document when new version is
-        # available. Add to docstring as well
-        spin_cycle.extend(spin_start + 7 + (esa_asc_group - 1) * 2)
+        # Calculate spin cycle for each DE in the group
+        spin_cycle.extend(spin_start + 7 + (group_ds["esa_step"] - 1) * 2)
+        # Assign spin cycle to the corresponding indices in the L1B DE dataset
+        print("spin_cycle", spin_cycle)
 
     l1b_de["spin_cycle"] = xr.DataArray(
         spin_cycle,

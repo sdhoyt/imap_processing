@@ -238,9 +238,9 @@ def test_spin_cycle():
     de = xr.Dataset(
         {
             "de_count": ("epoch", [2, 3]),
-            "esa_step": ("direct_event", [1, 2, 3, 4, 5]),
+            "esa_step": ("direct_events", [1, 2, 3, 4, 5]),
         },
-        coords={"epoch": [0, 1], "direct_event": [1, 2, 3, 4, 5]},
+        coords={"epoch": [0, 1], "direct_events": [1, 2, 3, 4, 5]},
     )
 
     # spin_cycle = spin_start + 7 + (esa_step - 1) * 2
