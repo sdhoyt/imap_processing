@@ -13,7 +13,7 @@ from imap_processing.lo.l1b.lo_l1b import (
     convert_start_end_acq_times,
     convert_tofs_to_eu,
     create_datasets,
-    get_avg_spin_durations,
+    set_avg_spin_durations,
     get_spin_angle,
     get_spin_start_times,
     identify_species,
@@ -195,12 +195,18 @@ def test_convert_start_end_acq_times():
 
 def test_get_avg_spin_durations():
     # Arrange
+    lo_l1a_de = xr.Dataset(
+        {
+            "de_count": ("epoch", [2, 1, 0]),
+        }
+    )
     acq_start = xr.DataArray([0, 423, 846.2], dims="epoch")
     acq_end = xr.DataArray([422.8, 846, 1269.7], dims="epoch")
-    expected_avg_spin_durations = np.array([422.8, 423, 423.5]) / 28
+    #expected_avg_spin_durations = np.array([422.8, 423, 423.5]) / 28
+    expected_avg_spin_durations = np.array([422.8, 422.8, 423]) / 28
 
     # Act
-    avg_spin_durations = get_avg_spin_durations(acq_start, acq_end)
+    avg_spin_durations = set_avg_spin_durations(lo_l1a_de, acq_start, acq_end)
 
     # Assert
     np.testing.assert_array_equal(avg_spin_durations, expected_avg_spin_durations)

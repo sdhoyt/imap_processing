@@ -52,7 +52,7 @@ def lo_l1b(dependencies: dict) -> list[Path]:
         # Get the start and end times for each spin epoch
         acq_start, acq_end = convert_start_end_acq_times(spin_data)
         # Get the average spin durations for each epoch
-        avg_spin_durations = get_avg_spin_durations(acq_start, acq_end)
+        l1b_de = set_avg_spin_durations(l1a_de, acq_start, acq_end)
         # get spin angle (0 - 360 degrees) for each DE
         spin_angle = get_spin_angle(l1a_de)
         # calculate and set the spin bin based on the spin angle
@@ -167,8 +167,8 @@ def convert_start_end_acq_times(
     return (acq_start, acq_end)
 
 
-def get_avg_spin_durations(
-    acq_start: xr.DataArray, acq_end: xr.DataArray
+def set_avg_spin_durations(
+    l1a_de: xr.Dataset, l1b_de : xr.Dataset, acq_start: xr.DataArray, acq_end: xr.DataArray
 ) -> xr.DataArray:
     """
     Get the average spin duration for each spin epoch.
@@ -187,8 +187,14 @@ def get_avg_spin_durations(
     """
     # Get the avg spin duration for each spin epoch
     # There are 28 spins per epoch (1 aggregated science cycle)
-    avg_spin_durations = (acq_end - acq_start) / 28
-    return avg_spin_durations
+    avg_spin_durations = np.repeat((acq_end - acq_start) / 28, l1a_de["de_count"])
+    l1b_de["avg_spin_durations"] = xr.DataArray(
+        avg_spin_durations,
+        dims=["epoch"],
+        # TODO: Add spin angle to YAML file
+        # attrs=attr_mgr.get_variable_attributes("spin_bin"),
+    )
+    return l1b_de
 
 
 def get_spin_angle(l1a_de: xr.Dataset) -> Union[np.ndarray[np.float64], Any]:

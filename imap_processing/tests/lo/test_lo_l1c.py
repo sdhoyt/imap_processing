@@ -1,29 +1,161 @@
 from collections import namedtuple
-
+import pytest
 import numpy as np
+import xarray as xr
 
 from imap_processing import imap_module_directory
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
 from imap_processing.cdf.utils import load_cdf
-from imap_processing.lo.l1c.lo_l1c import create_datasets, lo_l1c
+from imap_processing.lo.l1c.lo_l1c import (
+    create_datasets,
+    lo_l1c,
+    create_pset_counts,
+    initialize_pset,
+    set_spin_nums,
+    calculate_exposure_times
+)
 
-
-def test_lo_l1c():
-    # Arrange
-    de_file = (
-        imap_module_directory / "tests/lo/test_cdfs/imap_lo_l1b_de_20100101_v001.cdf"
+@pytest.fixture
+def l1b_de():
+    l1b_de = xr.Dataset(
+        {
+            "pointing_bin_lon": ("epoch", [20, 0, 20, 2000, 3500]),
+            "pointing_bin_lat": ("epoch", [20, 20, 20, 20, 20]),
+            "esa_step": ("epoch", [1, 2, 1, 4, 5]),
+            "coincidence_type": ("epoch", ["111111", "111100", "111000", "110100", "110000"]),
+            "species": ("epoch", ["h", "o", "h", "h", "o"]),
+            "spin_cycle": ("epoch", [1, 2, 3, 4, 5]),
+            "avg_spin_durations": ("epoch", [15.2, 15.2, 14.9, 15, 14.9]),
+        },
+        coords={
+            "epoch": [
+                7.9794907049e17,
+                7.9794907153e17,
+                7.9794907254e17,
+                7.9794907354e17,
+                7.9794907454e17,
+            ],
+        },
     )
-    data = {}
-    dataset = load_cdf(de_file)
-    data[dataset.attrs["Logical_source"]] = dataset
+    return l1b_de
+
+
+@pytest.fixture
+def attr_mgr():
+    attr_mgr_l1b = ImapCdfAttributes()
+    attr_mgr_l1b.add_instrument_global_attrs(instrument="lo")
+    attr_mgr_l1b.add_instrument_variable_attrs(instrument="lo", level="l1c")
+    return attr_mgr_l1b
+
+
+@pytest.fixture
+def counts():
+    """Fixture for initial counts."""
+    return np.zeros((1, 3600, 40, 7))
+@pytest.fixture
+def h_counts(counts):
+    h = counts.copy()
+    h[0, 20, 20, 1] = 2
+    h[0, 2000, 20, 4] = 1
+    return h
+@pytest.fixture
+def o_counts(counts):
+    o = counts.copy()
+    o[0, 3500, 20, 5] = 1
+    o[0, 0, 20, 2] = 1
+    return o
+@pytest.fixture
+def triples_counts(counts):
+    triples = counts.copy()
+    triples[0, 20, 20, 1] = 2
+    triples[0, 0, 20, 2] = 1
+    return triples
+@pytest.fixture
+def doubles_counts(counts):
+    doubles = counts.copy()
+    doubles[0, 2000, 20, 4] = 1
+    doubles[0, 3500, 20, 5] = 1
+    return doubles
+
+def test_lo_l1c(l1b_de):
+    # Arrange
+    data = {"imap_lo_l1b_de": l1b_de}
 
     expected_logical_source = "imap_lo_l1c_pset"
     # Act
     output_dataset = lo_l1c(data)
 
     # Assert
-    assert expected_logical_source == output_dataset.attrs["Logical_source"]
+    assert expected_logical_source == output_dataset[0].attrs["Logical_source"]
 
+def test_intialize_pset(l1b_de, attr_mgr):
+    # Act
+    pset = initialize_pset(l1b_de, attr_mgr, "imap_lo_l1c_pset")
+    expected_epoch = np.array(7.9794907254e17)
+
+    # Assert
+    np.testing.assert_array_equal(pset["epoch"], expected_epoch)
+
+def test_create_pset_counts(l1b_de):
+    # Arrange
+    expected_counts = np.zeros((1, 3600, 40, 7))
+    expected_counts[0, 20, 20, 1] = 2
+    expected_counts[0, 2000, 20, 4] = 1
+    expected_counts[0, 3500, 20, 5] = 1
+    expected_counts[0, 0, 20, 2] = 1
+
+    # Act
+    counts = create_pset_counts(l1b_de)
+
+    # Assert
+    np.testing.assert_array_equal(counts, expected_counts)
+
+def test_create_h_pset_counts(l1b_de, h_counts):
+    # Act
+    counts = create_pset_counts(l1b_de, "h")
+
+    # Assert
+    np.testing.assert_array_equal(counts, h_counts)
+
+def test_create_o_pset_counts(l1b_de, o_counts):
+    # Act
+    counts = create_pset_counts(l1b_de, "o")
+
+    # Assert
+    np.testing.assert_array_equal(counts, o_counts)
+
+def test_create_triples_pset_counts(l1b_de, triples_counts):
+    # Act
+    counts = create_pset_counts(l1b_de, "triples")
+
+    # Assert
+    np.testing.assert_array_equal(counts, triples_counts)
+
+def test_create_doubles_pset_counts(l1b_de, doubles_counts):
+    # Act
+    counts = create_pset_counts(l1b_de, "doubles")
+
+    # Assert
+    np.testing.assert_array_equal(counts, doubles_counts)
+
+def test_calculate_exposure_times(l1b_de):
+    # Arrange
+    counts = create_pset_counts(l1b_de)
+    expected_exposure_times = np.full((1, 3600, 40, 7), np.nan)
+    # Average of the exposure times for each bin
+    expected_exposure_times[0, 20, 20, 1] = np.mean([15.2, 14.9])
+    expected_exposure_times[0, 2000, 20, 4] = 15
+    expected_exposure_times[0, 3500, 20, 5] = 14.9
+    expected_exposure_times[0, 0, 20, 2] = 15.2
+    # Act
+    exposure_times = calculate_exposure_times(counts, l1b_de)
+
+    # Assert
+    np.testing.assert_allclose(
+        exposure_times,
+        expected_exposure_times,
+        atol=1e-2,
+    )
 
 def test_create_dataset():
     attr_mgr = ImapCdfAttributes()

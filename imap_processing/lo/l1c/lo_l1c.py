@@ -6,7 +6,7 @@ from pathlib import Path
 
 import numpy as np
 import xarray as xr
-
+from scipy.stats import binned_statistic_dd
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
 from imap_processing.spice.time import met_to_ttj2000ns
 
@@ -33,29 +33,151 @@ def lo_l1c(dependencies: dict) -> list[Path]:
     # if the dependencies are used to create Annotated Direct Events
     if "imap_lo_l1b_de" in dependencies:
         logical_source = "imap_lo_l1c_pset"
-        # TODO: TEMPORARY. Need to update to use the L1C data class once that exists
-        #  and I have sample data.
-        data_field_tup = namedtuple("data_field_tup", ["name"])
-        data_fields = [
-            data_field_tup("POINTING_START"),
-            data_field_tup("POINTING_END"),
-            data_field_tup("MODE"),
-            data_field_tup("PIVOT_ANGLE"),
-            data_field_tup("TRIPLES_COUNTS"),
-            data_field_tup("TRIPLES_RATES"),
-            data_field_tup("DOUBLES_COUNTS"),
-            data_field_tup("DOUBLES_RATES"),
-            data_field_tup("HYDROGEN_COUNTS"),
-            data_field_tup("HYDROGEN_RATES"),
-            data_field_tup("OXYGEN_COUNTS"),
-            data_field_tup("OXYGEN_RATES"),
-            data_field_tup("EXPOSURE_TIME"),
-        ]
+        l1b_de = dependencies["imap_lo_l1b_de"]
 
-    dataset: list[Path] = create_datasets(attr_mgr, logical_source, data_fields)  # type: ignore[arg-type]
-    # TODO Remove once data_fields input is removed from create_datasets
-    return dataset
+        pset = initialize_pset(l1b_de, attr_mgr, logical_source)
+        pset["start_spin_num"], pset["end_spin_num"] = set_spin_nums(l1b_de)
+        full_counts = create_pset_counts(l1b_de)
+        pset["triples_counts"] = create_pset_counts(l1b_de, "triples")
+        pset["doubles_counts"] = create_pset_counts(l1b_de, "doubles")
+        pset["h_counts"] = create_pset_counts(l1b_de, "h")
+        pset["o_counts"] = create_pset_counts(l1b_de, "o")
+        pset["exposure_time"] = calculate_exposure_times(full_counts, l1b_de)
 
+        #dataset: list[Path] = create_datasets(attr_mgr, logical_source,
+        #                                      data_fields)  # type: ignore[arg-type]
+    return [pset]
+
+
+def initialize_pset(l1b_de, attr_mgr, logical_source) -> xr.Dataset:
+    """
+    Initialize the PSET dataset.
+
+    Returns
+    -------
+    pset : xarray.Dataset
+        Initialized PSET dataset.
+    """
+    pset = xr.Dataset(
+        attrs=attr_mgr.get_global_attributes(logical_source),
+    )
+
+    mid_idx = len(l1b_de["epoch"]) // 2
+    pset_epoch = l1b_de["epoch"][mid_idx].item()
+    pset["epoch"] = xr.DataArray(
+        np.array([pset_epoch]),
+        dims=["epoch"],
+        # attrs=attr_mgr.get_variable_attributes("epoch")
+    )
+
+    return pset
+
+
+def set_spin_nums(l1b_de: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
+    start_spin_num = xr.DataArray(
+        [l1b_de["spin_cycle"][0].values],
+        dims=["epoch"],
+        # TODO: add start_spin_num to attributes
+        # attrs=attr_mgr.get_variable_attributes("start_spin_num"),
+    )
+    end_spin_num = xr.DataArray(
+        [l1b_de["spin_cycle"][-1].values],
+        dims=["epoch"],
+        # TODO: add end_spin_num to attributes
+        # attrs=attr_mgr.get_variable_attributes("end_spin_num"),
+    )
+    return start_spin_num,  end_spin_num
+
+
+def create_pset_counts(de: xr.Dataset, filter : str = "") -> xr.DataArray:
+    filter_options = {
+        "triples": [
+            "111111",
+            "111100",
+            "111000"
+        ],
+        "doubles": [
+            "110100",
+            "110000",
+            "101101",
+            "101100",
+            "101000",
+            "100100",
+            "100101",
+            "100000",
+            "011100",
+            "011000",
+            "010100",
+            "010101",
+            "010000",
+            "001100",
+            "001101",
+            "001000"
+        ],
+        "h": "h",
+        "o": "o",
+    }
+
+    if filter not in filter_options and filter != "":
+        raise ValueError(f"Invalid filter option. Choose from {filter_options}")
+
+    if filter == "triples" or filter == "doubles":
+        filter_idx = np.where(np.isin(de["coincidence_type"], filter_options[filter]))[0]
+    elif filter == "h" or filter == "o":
+        filter_idx = np.where(np.isin(de["species"], filter_options[filter]))[0]
+    else:
+        filter_idx = np.arange(len(de["epoch"]))
+
+    de_filtered = de.isel(epoch=filter_idx)
+    data = np.column_stack((
+        de_filtered["pointing_bin_lon"],
+        de_filtered["pointing_bin_lat"],
+        de_filtered["esa_step"]))
+    lon_edges = np.arange(3601)
+    lat_edges = np.arange(41)
+    energy_edges = np.arange(8)
+
+    hist, edges = np.histogramdd(
+        data,
+        bins=[lon_edges, lat_edges, energy_edges],
+    )
+
+    # add a new axis of size 1 for the epoch
+    hist = hist[np.newaxis, :, :, :]
+
+    counts = xr.DataArray(
+        data=hist.astype(np.int16),
+        dims=["epoch", "lon_bins", "lat_bins", "energy_bins"],
+    )
+
+    return counts
+
+def calculate_exposure_times(counts: xr.DataArray, l1b_de : xr.Dataset) -> xr.DataArray:
+    # Create bin edges
+    lon_edges = np.arange(3601)
+    lat_edges = np.arange(41)
+    energy_edges = np.arange(8)
+
+    data = np.column_stack((
+        l1b_de["pointing_bin_lon"],
+        l1b_de["pointing_bin_lat"],
+        l1b_de["esa_step"]))
+
+    result = binned_statistic_dd(
+        data,
+        l1b_de["avg_spin_durations"].to_numpy(),
+        statistic='mean',
+        bins=[lon_edges, lat_edges, energy_edges]
+    )
+
+    stat = result.statistic[np.newaxis, :, :, :]
+
+    exposure_time = xr.DataArray(
+        data=stat.astype(np.float16),
+        dims=["epoch", "lon_bins", "lat_bins", "energy_bins"],
+    )
+
+    return exposure_time
 
 # TODO: This is going to work differently when I sample data.
 #  The data_fields input is temporary.
