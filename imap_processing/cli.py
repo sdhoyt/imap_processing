@@ -775,6 +775,10 @@ class Lo(ProcessInstrument):
                 science_files = dependencies.get_file_paths(
                     source="lo", descriptor=input_type.descriptor
                 )
+                # can use part of descriptor that matches to get multiple files
+                ancillary_files = dependencies.get_file_paths(
+                    source="lo", descriptor="<anc descriptor>"
+                )
                 dataset = load_cdf(science_files[0])
                 data_dict[dataset.attrs["Logical_source"]] = dataset
             # TODO: This is returning the wrong type

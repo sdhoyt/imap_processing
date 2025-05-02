@@ -1,12 +1,12 @@
 """IMAP-Lo L1C Data Processing."""
 
-from collections import namedtuple
 from dataclasses import Field
 from pathlib import Path
 
 import numpy as np
 import xarray as xr
 from scipy.stats import binned_statistic_dd
+
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
 from imap_processing.spice.time import met_to_ttj2000ns
 
@@ -35,16 +35,29 @@ def lo_l1c(dependencies: dict) -> list[Path]:
         logical_source = "imap_lo_l1c_pset"
         l1b_de = dependencies["imap_lo_l1b_de"]
 
-        pset = initialize_pset(l1b_de, attr_mgr, logical_source)
-        pset["start_spin_num"], pset["end_spin_num"] = set_spin_nums(l1b_de)
-        full_counts = create_pset_counts(l1b_de)
-        pset["triples_counts"] = create_pset_counts(l1b_de, "triples")
-        pset["doubles_counts"] = create_pset_counts(l1b_de, "doubles")
-        pset["h_counts"] = create_pset_counts(l1b_de, "h")
-        pset["o_counts"] = create_pset_counts(l1b_de, "o")
-        pset["exposure_time"] = calculate_exposure_times(full_counts, l1b_de)
+        l1b_goodtimes_only = filter_goodtimes(l1b_de)
+        pset = initialize_pset(l1b_goodtimes_only, attr_mgr, logical_source)
+        pset["start_spin_num"], pset["end_spin_num"] = set_spin_nums(l1b_goodtimes_only)
+        full_counts = create_pset_counts(l1b_goodtimes_only)
+        pset["triples_counts"] = create_pset_counts(l1b_goodtimes_only, "triples")
+        pset["doubles_counts"] = create_pset_counts(l1b_goodtimes_only, "doubles")
+        pset["h_counts"] = create_pset_counts(l1b_goodtimes_only, "h")
+        pset["o_counts"] = create_pset_counts(l1b_goodtimes_only, "o")
+        pset["exposure_time"] = calculate_exposure_times(
+            full_counts, l1b_goodtimes_only
+        )
+        pset["triples_rates"] = create_pset_rates(
+            pset["triples_counts"], pset["exposure_time"]
+        )
+        pset["doubles_rates"] = create_pset_rates(
+            pset["doubles_counts"], pset["exposure_time"]
+        )
+        pset["h_rates"] = create_pset_rates(pset["h_counts"], pset["exposure_time"])
+        pset["o_rates"] = create_pset_rates(pset["o_counts"], pset["exposure_time"])
+        pset["h_flux"] = create_pset_flux(pset["h_rates"])
+        pset["o_flux"] = create_pset_flux(pset["o_rates"])
 
-        #dataset: list[Path] = create_datasets(attr_mgr, logical_source,
+        # dataset: list[Path] = create_datasets(attr_mgr, logical_source,
         #                                      data_fields)  # type: ignore[arg-type]
     return [pset]
 
@@ -73,6 +86,12 @@ def initialize_pset(l1b_de, attr_mgr, logical_source) -> xr.Dataset:
     return pset
 
 
+def filter_goodtimes(l1b_de: xr.Dataset) -> xr.Dataset:
+    # TODO: Ancilary data for goodtimes is not available yet. Removing badtimes
+    #  for now. This will be updated once the ancillary data is available.
+    return l1b_de.where(l1b_de["badtimes"] == 0, drop=True)
+
+
 def set_spin_nums(l1b_de: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
     start_spin_num = xr.DataArray(
         [l1b_de["spin_cycle"][0].values],
@@ -86,16 +105,12 @@ def set_spin_nums(l1b_de: xr.Dataset) -> tuple[xr.DataArray, xr.DataArray]:
         # TODO: add end_spin_num to attributes
         # attrs=attr_mgr.get_variable_attributes("end_spin_num"),
     )
-    return start_spin_num,  end_spin_num
+    return start_spin_num, end_spin_num
 
 
-def create_pset_counts(de: xr.Dataset, filter : str = "") -> xr.DataArray:
+def create_pset_counts(de: xr.Dataset, filter: str = "") -> xr.DataArray:
     filter_options = {
-        "triples": [
-            "111111",
-            "111100",
-            "111000"
-        ],
+        "triples": ["111111", "111100", "111000"],
         "doubles": [
             "110100",
             "110000",
@@ -112,7 +127,7 @@ def create_pset_counts(de: xr.Dataset, filter : str = "") -> xr.DataArray:
             "010000",
             "001100",
             "001101",
-            "001000"
+            "001000",
         ],
         "h": "h",
         "o": "o",
@@ -122,17 +137,22 @@ def create_pset_counts(de: xr.Dataset, filter : str = "") -> xr.DataArray:
         raise ValueError(f"Invalid filter option. Choose from {filter_options}")
 
     if filter == "triples" or filter == "doubles":
-        filter_idx = np.where(np.isin(de["coincidence_type"], filter_options[filter]))[0]
+        filter_idx = np.where(np.isin(de["coincidence_type"], filter_options[filter]))[
+            0
+        ]
     elif filter == "h" or filter == "o":
         filter_idx = np.where(np.isin(de["species"], filter_options[filter]))[0]
     else:
         filter_idx = np.arange(len(de["epoch"]))
 
     de_filtered = de.isel(epoch=filter_idx)
-    data = np.column_stack((
-        de_filtered["pointing_bin_lon"],
-        de_filtered["pointing_bin_lat"],
-        de_filtered["esa_step"]))
+    data = np.column_stack(
+        (
+            de_filtered["pointing_bin_lon"],
+            de_filtered["pointing_bin_lat"],
+            de_filtered["esa_step"],
+        )
+    )
     lon_edges = np.arange(3601)
     lat_edges = np.arange(41)
     energy_edges = np.arange(8)
@@ -152,22 +172,22 @@ def create_pset_counts(de: xr.Dataset, filter : str = "") -> xr.DataArray:
 
     return counts
 
-def calculate_exposure_times(counts: xr.DataArray, l1b_de : xr.Dataset) -> xr.DataArray:
+
+def calculate_exposure_times(counts: xr.DataArray, l1b_de: xr.Dataset) -> xr.DataArray:
     # Create bin edges
     lon_edges = np.arange(3601)
     lat_edges = np.arange(41)
     energy_edges = np.arange(8)
 
-    data = np.column_stack((
-        l1b_de["pointing_bin_lon"],
-        l1b_de["pointing_bin_lat"],
-        l1b_de["esa_step"]))
+    data = np.column_stack(
+        (l1b_de["pointing_bin_lon"], l1b_de["pointing_bin_lat"], l1b_de["esa_step"])
+    )
 
     result = binned_statistic_dd(
         data,
         l1b_de["avg_spin_durations"].to_numpy(),
-        statistic='mean',
-        bins=[lon_edges, lat_edges, energy_edges]
+        statistic="mean",
+        bins=[lon_edges, lat_edges, energy_edges],
     )
 
     stat = result.statistic[np.newaxis, :, :, :]
@@ -179,8 +199,40 @@ def calculate_exposure_times(counts: xr.DataArray, l1b_de : xr.Dataset) -> xr.Da
 
     return exposure_time
 
-# TODO: This is going to work differently when I sample data.
-#  The data_fields input is temporary.
+
+def create_pset_rates(
+    counts: xr.DataArray, exposure_time: xr.DataArray
+) -> xr.DataArray:
+    # TODO: This is going to work differently when I sample data.
+    #  The data_fields input is temporary.
+    rates = counts / exposure_time
+    rates = xr.DataArray(
+        data=rates.astype(np.float16),
+        dims=["epoch", "lon_bins", "lat_bins", "energy_bins"],
+    )
+    return rates
+
+
+def create_pset_flux(rates: xr.DataArray) -> xr.DataArray:
+    # temporary values. These will all come from ancillary data when
+    # the data is available.
+    geometric_factor = 1.0
+    efficiency_factor = 1.0
+    energy_dict = {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7}
+    energies = np.array([energy_dict[i] for i in range(1, 8)])
+
+    energies = energies.reshape(1, 1, 7)
+
+    flux = rates / (geometric_factor * energies * efficiency_factor)
+
+    flux = xr.DataArray(
+        data=flux.astype(np.float16),
+        dims=["epoch", "lon_bins", "lat_bins", "energy_bins"],
+    )
+
+    return flux
+
+
 def create_datasets(
     attr_mgr: ImapCdfAttributes, logical_source: str, data_fields: list[Field]
 ) -> xr.Dataset:
