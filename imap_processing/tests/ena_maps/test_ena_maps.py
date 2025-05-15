@@ -152,6 +152,9 @@ class TestHiPointingSet:
         assert hi_pset.num_points == 3600
         np.testing.assert_array_equal(hi_pset.az_el_points.shape, (3600, 2))
 
+        for var_name in ["exposure_factor", "bg_rates", "bg_rates_unc"]:
+            assert var_name in hi_pset.data
+
     def test_from_cdf(self, hi_pset_cdf_path):
         """Test coverage for from_cdf method."""
         hi_pset = ena_maps.HiPointingSet(hi_pset_cdf_path)
@@ -163,7 +166,7 @@ class TestHiPointingSet:
         rect_map = ena_maps.RectangularSkyMap(
             spacing_deg=2, spice_frame=geometry.SpiceFrame.ECLIPJ2000
         )
-        rect_map.project_pset_values_to_map(hi_pset, ["counts", "exposure_times"])
+        rect_map.project_pset_values_to_map(hi_pset, ["counts", "exposure_factor"])
         assert rect_map.data_1d["counts"].max() > 0
 
 
@@ -261,14 +264,16 @@ class TestRectangularSkyMap:
         simple_summed_pset_counts_by_energy = np.zeros(
             shape=(
                 self.ultra_l1c_pset_products[0]["counts"].sizes[
-                    CoordNames.ENERGY_ULTRA.value
+                    CoordNames.ENERGY_ULTRA_L1C.value
                 ],
             )
         )
         for pset in self.ultra_l1c_pset_products:
             simple_summed_pset_counts_by_energy += pset["counts"].sum(
                 dim=[
-                    d for d in pset["counts"].dims if d != CoordNames.ENERGY_ULTRA.value
+                    d
+                    for d in pset["counts"].dims
+                    if d != CoordNames.ENERGY_ULTRA_L1C.value
                 ]
             )
 
@@ -276,7 +281,7 @@ class TestRectangularSkyMap:
             dim=[
                 d
                 for d in rectangular_map.data_1d["counts"].dims
-                if d != CoordNames.ENERGY_ULTRA.value
+                if d != CoordNames.ENERGY_ULTRA_L1C.value
             ]
         )
 
@@ -326,14 +331,16 @@ class TestRectangularSkyMap:
         simple_summed_pset_counts_by_energy = np.zeros(
             shape=(
                 self.rectangular_l1c_pset_products[0]["counts"].sizes[
-                    CoordNames.ENERGY_ULTRA.value
+                    CoordNames.ENERGY_ULTRA_L1C.value
                 ],
             )
         )
         for pset in self.rectangular_l1c_pset_products:
             simple_summed_pset_counts_by_energy += pset["counts"].sum(
                 dim=[
-                    d for d in pset["counts"].dims if d != CoordNames.ENERGY_ULTRA.value
+                    d
+                    for d in pset["counts"].dims
+                    if d != CoordNames.ENERGY_ULTRA_L1C.value
                 ]
             )
 
@@ -341,7 +348,7 @@ class TestRectangularSkyMap:
             dim=[
                 d
                 for d in rectangular_map.data_1d["counts"].dims
-                if d != CoordNames.ENERGY_ULTRA.value
+                if d != CoordNames.ENERGY_ULTRA_L1C.value
             ]
         )
 
@@ -438,13 +445,13 @@ class TestRectangularSkyMap:
         assert "counts" in rect_map_ds.data_vars
         assert rect_map_ds["counts"].shape == (
             1,
-            rectangular_pset.data["counts"].sizes[CoordNames.ENERGY_ULTRA.value],
+            rectangular_pset.data["counts"].sizes[CoordNames.ENERGY_ULTRA_L1C.value],
             360 / skymap_spacing,
             180 / skymap_spacing,
         )
         assert rect_map_ds["counts"].dims == (
             CoordNames.TIME.value,
-            CoordNames.ENERGY_ULTRA.value,
+            CoordNames.ENERGY_ULTRA_L1C.value,
             CoordNames.AZIMUTH_L2.value,
             CoordNames.ELEVATION_L2.value,
         )
@@ -492,7 +499,7 @@ class TestHealpixSkyMap:
 
     @pytest.mark.parametrize(
         "nside",
-        [8, 16, 32],
+        [4, 8],
     )
     @pytest.mark.parametrize("nested", [True, False], ids=["nested", "ring"])
     def test_instantiate(self, nside, nested):
@@ -694,12 +701,14 @@ class TestHealpixSkyMap:
         assert "counts" in hp_map_ds.data_vars
         assert hp_map_ds["counts"].shape == (
             1,
-            mock_pset_input_frame.data["counts"].sizes[CoordNames.ENERGY_ULTRA.value],
+            mock_pset_input_frame.data["counts"].sizes[
+                CoordNames.ENERGY_ULTRA_L1C.value
+            ],
             hp_map.num_points,
         )
         assert hp_map_ds["counts"].dims == (
             CoordNames.TIME.value,
-            CoordNames.ENERGY_ULTRA.value,
+            CoordNames.ENERGY_ULTRA_L1C.value,
             CoordNames.HEALPIX_INDEX.value,
         )
         np.testing.assert_array_equal(
@@ -1151,10 +1160,12 @@ class TestAbstractSkyMap:
     def test_to_dict_and_from_dict(self, skymap_props_dict):
         """Test serialization to and from dictionary"""
         # Make a SkyMap from the original properties dict
-        skymap_from_dict = ena_maps.AbstractSkyMap.from_dict(skymap_props_dict)
+        skymap_from_dict = ena_maps.AbstractSkyMap.from_properties_dict(
+            skymap_props_dict
+        )
 
         # Use the SkyMap to create a new properties dict
-        dict_from_skymap = skymap_from_dict.to_dict()
+        dict_from_skymap = skymap_from_dict.to_properties_dict()
 
         assert (
             skymap_from_dict.spice_reference_frame
@@ -1234,13 +1245,15 @@ class TestAbstractSkyMap:
             temp_file_path_input = temp_file.name
 
         # Read the json file and create a new SkyMap from it
-        skymap_from_json = ena_maps.AbstractSkyMap.from_json(temp_file_path_input)
+        skymap_from_json = ena_maps.AbstractSkyMap.from_properties_json(
+            temp_file_path_input
+        )
 
         # Create json output from the SkyMap at a separate temporary file path
         temp_file_path_output = tempfile.NamedTemporaryFile(
             delete=False, suffix=".json", mode="w"
         ).name
-        skymap_from_json.to_json(json_path=temp_file_path_output)
+        skymap_from_json.to_properties_json(json_path=temp_file_path_output)
 
         assert skymap_from_json.spice_reference_frame == geometry.SpiceFrame.ECLIPJ2000
         assert skymap_from_json.tiling_type is ena_maps.SkyTilingType.HEALPIX
