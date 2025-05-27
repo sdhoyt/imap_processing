@@ -7,7 +7,7 @@ import xarray as xr
 
 from imap_processing import imap_module_directory
 from imap_processing.cdf.imap_cdf_manager import ImapCdfAttributes
-from imap_processing.cdf.utils import load_cdf
+from imap_processing.cdf.utils import load_cdf, write_cdf
 from imap_processing.lo.l1b.lo_l1b import (
     calculate_tof1_for_golden_triples,
     convert_start_end_acq_times,
@@ -61,6 +61,31 @@ def attr_mgr_l1a():
     attr_mgr.add_instrument_variable_attrs(instrument="lo", level="l1a")
     return attr_mgr
 
+
+@pytest.mark.external_kernel
+@pytest.mark.use_test_metakernel("imap_ena_sim_metakernel.template")
+def test_lo_l1b_temp():
+    # Arrange
+    de_file = (
+        imap_module_directory / "tests/lo/test_cdfs/imap_lo_l1a_de_20250518_v001.cdf"
+    )
+    spin_file = (
+        imap_module_directory / "tests/lo/test_cdfs/imap_lo_l1a_spin_20250518_v001.cdf"
+    )
+    data = {}
+    for file in [de_file, spin_file]:
+        dataset = load_cdf(file)
+        data[dataset.attrs["Logical_source"]] = dataset
+
+    expected_logical_source = "imap_lo_l1b_de"
+    # Act
+    output_file = lo_l1b(data)
+
+    path = write_cdf(output_file[0])
+    print("CDF_PATH", path)
+
+    # Assert
+    assert expected_logical_source == output_file[0].attrs["Logical_source"]
 
 @patch("imap_processing.lo.l1b.lo_l1b.instrument_pointing")
 def test_lo_l1b(mock_instrument_pointing):
