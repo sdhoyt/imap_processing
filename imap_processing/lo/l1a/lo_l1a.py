@@ -105,14 +105,11 @@ def lo_l1a(dependency: Path) -> list[xr.Dataset]:
         datasets_by_apid[LoAPID.ILO_SCI_DE] = datasets_by_apid[
             LoAPID.ILO_SCI_DE
         ].assign_coords(epoch=("epoch", epoch))
-        datasets_by_apid[LoAPID.ILO_SCI_DE] = datasets_by_apid[
-            LoAPID.ILO_SCI_DE
-        ].assign_coords(
-            shcoarse=(
-                "epoch",
-                datasets_by_apid[LoAPID.ILO_SCI_DE].shcoarse.values + time_shift,
-            )
-        )
+        print("DATASET", datasets_by_apid[LoAPID.ILO_SCI_DE])
+        datasets_by_apid[LoAPID.ILO_SCI_DE]["shcoarse"] = (
+            datasets_by_apid[LoAPID.ILO_SCI_DE]["shcoarse"] + time_shift / 1e9
+        )  # Convert to seconds
+        print("DATASET", datasets_by_apid[LoAPID.ILO_SCI_DE])
         print("New Epoch", epoch)
 
         datasets_by_apid[LoAPID.ILO_SCI_DE] = combine_segmented_packets(
