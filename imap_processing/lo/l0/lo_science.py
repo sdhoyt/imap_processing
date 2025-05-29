@@ -498,9 +498,10 @@ def organize_spin_data(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.D
     dataset = dataset.assign_coords(epoch=("epoch", epoch))
 
     time_shift_fields = ["start_sec_spin", "acq_start_sec", "acq_end_sec"]
-    for field in time_shift_fields:
-        if field in dataset:
+    for field in dataset.data_vars:
+        if field.startswith("start_sec_spin") or field in time_shift_fields:
             # Apply the time shift to the field
+            print("IM RUNNING")
             dataset[field] = dataset[field] + time_shift
 
     for spin_field in spin_fields:
