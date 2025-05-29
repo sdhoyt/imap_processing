@@ -20,7 +20,12 @@ from imap_processing.lo.l0.utils.bit_decompression import (
     Decompress,
     decompress_int,
 )
-from imap_processing.spice.time import met_to_ttj2000ns
+from imap_processing.spice.time import (
+    et_to_ttj2000ns,
+    et_to_utc,
+    met_to_ttj2000ns,
+    str_to_et,
+)
 from imap_processing.utils import convert_to_binary_string
 
 logger = logging.getLogger(__name__)
@@ -482,8 +487,22 @@ def organize_spin_data(dataset: xr.Dataset, attr_mgr: ImapCdfAttributes) -> xr.D
     # acq_start_sec is in units of seconds
     # acq_start_subsec is in units of microseconds
     acq_start = dataset.acq_start_sec + (1e-6 * dataset.acq_start_subsec)
-    epoch = met_to_ttj2000ns(acq_start)
+    et = str_to_et("2025-05-09T05:00:00.000")
+    print("ET TIME", et_to_utc(et))
+    new_epoch = et_to_ttj2000ns(et)
+    original_epoch = met_to_ttj2000ns(acq_start)
+    time_shift = (new_epoch - original_epoch) / 1e9  # Convert to seconds
+    print("TIME SHIFT", time_shift)
+    epoch = met_to_ttj2000ns(acq_start + time_shift)
+    print("New Epoch", epoch)
     dataset = dataset.assign_coords(epoch=("epoch", epoch))
+
+    time_shift_fields = ["start_sec_spin", "acq_start_sec", "acq_end_sec"]
+    for field in time_shift_fields:
+        if field in dataset:
+            # Apply the time shift to the field
+            dataset[field] = dataset[field] + time_shift
+
     for spin_field in spin_fields:
         # Get the field attributes
         field_attrs = attr_mgr.get_variable_attributes(spin_field, check_schema=False)

@@ -15,6 +15,11 @@ from imap_processing.lo.l0.lo_science import (
     parse_events,
     parse_histogram,
 )
+from imap_processing.spice.time import (
+    et_to_ttj2000ns,
+    et_to_utc,
+    str_to_et,
+)
 from imap_processing.utils import convert_to_binary_string, packet_file_to_datasets
 
 logger = logging.getLogger(__name__)
@@ -89,6 +94,26 @@ def lo_l1a(dependency: Path) -> list[xr.Dataset]:
             dims=datasets_by_apid[LoAPID.ILO_SCI_DE]["data"].dims,
             attrs=datasets_by_apid[LoAPID.ILO_SCI_DE]["data"].attrs,
         )
+
+        et = str_to_et("2025-05-09T05:00:00.000")
+        print("ET TIME", et_to_utc(et))
+        new_epoch = et_to_ttj2000ns(et)
+        original_epoch = datasets_by_apid[LoAPID.ILO_SCI_DE].epoch.values[0]
+        time_shift = new_epoch - original_epoch  # Convert to seconds
+        epoch = datasets_by_apid[LoAPID.ILO_SCI_DE].epoch.values + time_shift
+        print("TIME SHIFT", time_shift)
+        datasets_by_apid[LoAPID.ILO_SCI_DE] = datasets_by_apid[
+            LoAPID.ILO_SCI_DE
+        ].assign_coords(epoch=("epoch", epoch))
+        datasets_by_apid[LoAPID.ILO_SCI_DE] = datasets_by_apid[
+            LoAPID.ILO_SCI_DE
+        ].assign_coords(
+            shcoarse=(
+                "epoch",
+                datasets_by_apid[LoAPID.ILO_SCI_DE].shcoarse.values + time_shift,
+            )
+        )
+        print("New Epoch", epoch)
 
         datasets_by_apid[LoAPID.ILO_SCI_DE] = combine_segmented_packets(
             datasets_by_apid[LoAPID.ILO_SCI_DE]
