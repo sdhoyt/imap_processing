@@ -131,7 +131,12 @@ def lo_l1b(sci_dependencies: dict, anc_dependencies: list) -> list[Path]:
         # This carries over the epoch and count fields from L1A
         l1b_histrates = initialize_l1b_histrates(l1a_hist, attr_mgr_l1b, logical_source)
         # filter badtimes
-
+        hist_rate_fields = ["hydrogen", "oxygen"]
+        monitor_rate_fields = ["start_a", "start_c", "stop_b0", "stop_b3", "tof0", "tof1",
+                               "tof2", "tof3", "tof0_tof1", "tof0_tof2", "tof1_tof2",
+                               "silver_triple", "disc_tof0", "disc_tof1", "disc_tof2",
+                                 "disc_tof3", "pos0", "pos1", "pos2", "pos3"]
+        initialize_monitor_rates(l1)
         # resweep the histogram data
         l1b_histrates, exposure_factor = resweep_histogram_data(
             l1b_histrates, anc_dependencies
@@ -1210,33 +1215,33 @@ def initialize_l1b_histrates(
 
 
 def resweep_histogram_data(
-    l1b_histrates: xr.Dataset,
-    anc_dependencies: list,
-) -> tuple[xr.Dataset, np.ndarray]:
+        l1a_hist: xr.Dataset,
+        anc_dependencies: list,
+        fields_to_resweep: list[str],
+) -> tuple[xr.Dataset, dict[str, np.ndarray]]:
     """
     Correct energy steps in histogram data based on sweep and LUT tables.
 
-    Returns the updated dataset and a 3D array of reswept counts
-    (epoch, azimuth, esa_step) indicating how many original steps were reswept into
-    each final step.
+    Resweeps multiple count fields from the L1A histogram dataset and returns
+    a single dataset with all reswept fields, along with per-field exposure factors.
 
     Parameters
     ----------
-    l1b_histrates : xr.Dataset
-        The L1B histogram rates dataset.
+    l1a_hist : xr.Dataset
+        The L1A histogram dataset containing count fields to resweep.
     anc_dependencies : list
         List of ancillary file paths.
+    fields_to_resweep : list[str]
+        List of field names in l1a_hist to resweep (e.g., ['hydrogen', 'oxygen', ...]).
 
     Returns
     -------
-    l1b_histrates : xr.Dataset
-        The updated L1B histogram rates dataset with reswept counts.
-    exposure_factor : np.ndarray
-        3D array of exposure factors (epoch, azimuth, esa_step) indicating how many
-        ESA steps were reswept during resweeping.
+    reswept_dataset : xr.Dataset
+        Dataset containing all reswept count fields with preserved coordinates.
+    exposure_factors : dict[str, np.ndarray]
+        Dictionary mapping field name to 3D exposure factor array
+        (epoch, esa_step, azimuth).
     """
-    # The sweep table contains the mapping of dates to the LUT table which shows how
-    # the ESA steps should be reswept.
     sweep_df = lo_ancillary.read_ancillary_file(
         next(str(s) for s in anc_dependencies if "sweep-table" in str(s))
     )
@@ -1244,110 +1249,118 @@ def resweep_histogram_data(
         next(str(s) for s in anc_dependencies if "esa-mode-lut" in str(s))
     )
 
-    # Get the time information to compare the epochs to the sweep table dates
     sweep_dates = sweep_df["Date"].astype(str)
-    epochs = l1b_histrates["epoch"].values
+    epochs = l1a_hist["epoch"].values
     epoch_utc = et_to_utc(ttj2000ns_to_et(epochs))
 
-    # initialize the reswept counts arrays
-    h_counts_reswept = np.zeros_like(l1b_histrates["h_counts"].values)
-    o_counts_reswept = np.zeros_like(l1b_histrates["o_counts"].values)
-
-    # Get the number of azimuth bins from the l1b_histrates dataset
-    num_azimuth = l1b_histrates.sizes["spin_bin_6"]
-    # initialize exposure factor to 1 as this will be used to scale (multiply)
-    # the exposure time later
-    exposure_factor = np.full(
-        (len(epochs), l1b_histrates.sizes["esa_step"], num_azimuth), 1, dtype=int
+    # Create output dataset starting with coordinates from l1a_hist
+    reswept_ds = xr.Dataset(
+        coords={dim: l1a_hist.coords[dim] for dim in l1a_hist.coords}
     )
 
-    for epoch_idx, epoch in enumerate(epoch_utc):
-        # Get only the date portion of the epoch string for comparison with the
-        # sweep table
-        epoch_date_only = epoch.split("T")[0]
+    exposure_factors = {}
 
-        # if the epoch dat is not in the sweep table, raise an error
-        if epoch_date_only not in sweep_dates.values:
-            raise ValueError(
-                f"No sweep table entry found for date {epoch} at epoch idx {epoch_idx}"
-            )
-
-        # Get the matching sweep table entry for the epoch date and its LUT table index
-        matching_sweep = sweep_df[sweep_dates == epoch_date_only]
-        unique_lut_tables = matching_sweep["LUT_table"].unique()
-
-        # There should only be one unique LUT table for each date
-        if len(unique_lut_tables) != 1:
-            raise ValueError(
-                f"Expected exactly 1 unique LUT_table value for date {epoch_date_only},"
-                f" but found {len(unique_lut_tables)}: {unique_lut_tables}"
-            )
-
-        # Get the LUT entries for the identified LUT table index
-        lut_table_idx = unique_lut_tables[0]
-        lut_entries = lut_df[lut_df["Tbl_Idx"] == lut_table_idx].copy()
-
-        # If there are no LUT entries for the identified LUT table, log a warning
-        # and skip resweeping for this epoch
-        if len(lut_entries) == 0:
-            logger.warning(f"No LUT entries found for table index {lut_table_idx}")
-            h_counts_reswept[epoch_idx] = l1b_histrates["h_counts"].values[epoch_idx]
-            o_counts_reswept[epoch_idx] = l1b_histrates["o_counts"].values[epoch_idx]
+    # Process each field independently
+    for field_name in fields_to_resweep:
+        if field_name not in l1a_hist:
+            logger.warning(f"Field {field_name} not found in l1a_hist; skipping")
             continue
 
-        # Sort the LUT entries by E-Step_Idx to ensure correct mapping order
-        lut_entries = lut_entries.sort_values("E-Step_Idx")
+        field_data = l1a_hist[field_name]
 
-        # Create a mapping of original ESA step index to true ESA step
-        energy_step_mapping = {}
-        # Loop through the LUT entries and populate the mapping
-        for _, row in lut_entries.iterrows():
-            # Original ESA step index is 1-based, convert to 0-based
-            esa_idx = int(row["E-Step_Idx"]) - 1
-            # True ESA step is 1-based
-            true_esa_step = int(row["E-Step_lvl"])
-            # Populate the mapping
-            energy_step_mapping[esa_idx] = true_esa_step
+        # Validate shape: expect (epoch, esa_step, azimuth)
+        if field_data.ndim != 3:
+            logger.warning(
+                f"Field {field_name} has unexpected shape {field_data.shape}; "
+                f"expected 3D (epoch, esa_step, azimuth). Skipping."
+            )
+            continue
 
-        # TODO: Change all instances of azimuth to spin bin
-        # Resweep the counts for each spin bin using the energy step mapping
-        for az_idx in range(num_azimuth):
-            h_original = l1b_histrates["h_counts"].values[epoch_idx, :, az_idx]
-            o_original = l1b_histrates["o_counts"].values[epoch_idx, :, az_idx]
+        counts = field_data.values
+        n_epochs, n_esa, n_azimuth = counts.shape
 
-            # Loop through the original ESA step indices and map to the true ESA steps
-            for orig_idx, true_esa_step in energy_step_mapping.items():
-                # Check that the original index and true ESA step are within bounds
-                if orig_idx < len(h_original) and 1 <= true_esa_step <= 7:
-                    # Resweep the counts into the true ESA step
-                    # (convert to 0-based index)
-                    reswept_idx = true_esa_step - 1
-                    h_counts_reswept[epoch_idx, reswept_idx, az_idx] += h_original[
-                        orig_idx
-                    ]
-                    o_counts_reswept[epoch_idx, reswept_idx, az_idx] += o_original[
-                        orig_idx
-                    ]
-                    # If a reswept was needed for this index, increment the exposure
-                    # factor to so the exposure time can be scaled accordingly
-                    if orig_idx != reswept_idx:
-                        exposure_factor[epoch_idx, reswept_idx, az_idx] += 1
+        # Initialize reswept array and exposure factor
+        counts_reswept = np.zeros_like(counts)
+        exposure = np.ones((n_epochs, n_esa, n_azimuth), dtype=int)
 
+        # Resweep for each epoch
+        for epoch_idx, epoch in enumerate(epoch_utc):
+            epoch_date_only = epoch.split("T")[0]
+
+            if epoch_date_only not in sweep_dates.values:
+                logger.warning(
+                    f"Epoch date {epoch_date_only} not found in sweep table; "
+                    f"skipping resweep for epoch {epoch_idx}"
+                )
+                counts_reswept[epoch_idx] = counts[epoch_idx]
+                continue
+
+            matching_sweep = sweep_df[sweep_dates == epoch_date_only]
+            unique_lut_tables = matching_sweep["LUT_table"].unique()
+
+            if len(unique_lut_tables) != 1:
+                logger.warning(
+                    f"Multiple LUT tables found for date {epoch_date_only}; "
+                    f"skipping resweep for epoch {epoch_idx}"
+                )
+                counts_reswept[epoch_idx] = counts[epoch_idx]
+                continue
+
+            lut_table_idx = unique_lut_tables[0]
+            lut_entries = lut_df[lut_df["Tbl_Idx"] == lut_table_idx].copy()
+
+            if len(lut_entries) == 0:
+                logger.warning(
+                    f"No LUT entries found for table {lut_table_idx}; "
+                    f"skipping resweep for epoch {epoch_idx}"
+                )
+                counts_reswept[epoch_idx] = counts[epoch_idx]
+                continue
+
+            lut_entries = lut_entries.sort_values("E-Step_Idx")
+
+            # Build mapping: source ESA index -> list of target ESA indices
+            energy_step_mapping = {}
+            for _, row in lut_entries.iterrows():
+                src_idx = int(row["E-Step_Idx"]) - 1  # Convert to 0-based
+                tgt_raw = row.get("E-Step_To", row.get("E-Step", src_idx + 1))
+
+                # Handle comma-separated targets or single value
+                if pd.isna(tgt_raw):
+                    targets = [src_idx]
+                elif isinstance(tgt_raw, str) and "," in tgt_raw:
+                    targets = [int(x.strip()) - 1 for x in tgt_raw.split(",")]
                 else:
-                    logger.warning(
-                        f"Original ESA index {orig_idx} or "
-                        f"true ESA step {true_esa_step}"
-                        f" out of bounds at epoch idx {epoch_idx}, "
-                        f"spin bin idx {az_idx}"
-                    )
+                    targets = [int(tgt_raw) - 1]
 
-    l1b_histrates["h_counts"].values = h_counts_reswept
-    l1b_histrates["o_counts"].values = o_counts_reswept
-    l1b_histrates.attrs["energy_step_correction"] = (
-        "Applied LUT table energy step mapping"
-    )
+                energy_step_mapping.setdefault(src_idx, []).extend(targets)
 
-    return l1b_histrates, exposure_factor
+            # Apply resweeping for each azimuth bin
+            for az_idx in range(n_azimuth):
+                for src_esa in range(n_esa):
+                    if src_esa not in energy_step_mapping:
+                        counts_reswept[epoch_idx, src_esa, az_idx] = counts[
+                            epoch_idx, src_esa, az_idx
+                        ]
+                        continue
+
+                    target_esas = energy_step_mapping[src_esa]
+                    src_count = counts[epoch_idx, src_esa, az_idx]
+
+                    for tgt_esa in target_esas:
+                        if 0 <= tgt_esa < n_esa:
+                            counts_reswept[epoch_idx, tgt_esa, az_idx] += src_count
+                            exposure[epoch_idx, tgt_esa, az_idx] += 1
+
+        # Store reswept field in output dataset, preserving dims and coords
+        reswept_ds[field_name] = xr.DataArray(
+            counts_reswept,
+            dims=field_data.dims,
+            coords={d: field_data.coords[d] for d in field_data.dims},
+        )
+        exposure_factors[field_name] = exposure
+
+    return reswept_ds, exposure_factors
 
 
 def calculate_histogram_rates(
